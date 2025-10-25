@@ -24,42 +24,35 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '8.0.x'
           
       - name: Publish
         run: |
           cd Front-end/ReadNest-FE
           dotnet restore ReadNest-FE.sln
-          dotnet publish ReadNest-FE.sln -c Release -o ./publish -p:UseAppHost=false
-
-      - name: Prepare site directory
-        run: |
+          dotnet publish ReadNest-FE.sln -c Release -p:UseAppHost=false
+          PUBLISH_DIR=$(find . -path "*/bin/Release/*/publish/wwwroot" -type d | head -n 1)
+          echo "Publish dir: $PUBLISH_DIR"
+          cd ../..
           mkdir -p ./_site
-          cp -r Front-end/ReadNest-FE/publish/wwwroot/* ./_site/ 2>/dev/null || true
-          cp -r Front-end/ReadNest-FE/ReadNest-FE/wwwroot/* ./_site/    
-          if [ -d "Front-end/ReadNest-FE/publish/wwwroot/_framework" ]; then
-            cp -r Front-end/ReadNest-FE/publish/wwwroot/_framework ./_site/
-          fi
+          cp -r "Front-end/ReadNest-FE/$PUBLISH_DIR/"* ./_site/
 
-      - name: Debug - Check files
-        run: |
-          echo "=== All CSS files ==="
-          find ./_site -name "*.css"
-          echo ""
-          echo "=== All JS files ==="
-          find ./_site -name "*.js" | head -20
-          echo ""
-          echo "=== Directory structure ==="
-          ls -laR ./_site/ | head -50
-
-      - name: Change base href for GitHub Pages
-        run: |
-          sed -i 's|<base href="/" />|<base href="/ReadNest/" />|g' ./_site/index.html
-          
       - name: Add .nojekyll and 404.html
         run: |
           touch ./_site/.nojekyll
           cp ./_site/index.html ./_site/404.html
+
+      - name: Fix resource paths for GitHub Pages
+        run: |
+          sed -i 's|<base href="/ReadNest" />|<base href="/ReadNest/" />|g' ./_site/index.html
+          sed -i 's|href="/js/|href="js/|g' ./_site/index.html
+          sed -i 's|href="/css/|href="css/|g' ./_site/index.html
+          sed -i 's|href="/favicon.png"|href="favicon.png"|g' ./_site/index.html
+
+          sed -i 's|<base href="/ReadNest" />|<base href="/ReadNest/" />|g' ./_site/404.html
+          sed -i 's|href="/js/|href="js/|g' ./_site/404.html
+          sed -i 's|href="/css/|href="css/|g' ./_site/404.html
+          sed -i 's|href="/favicon.png"|href="favicon.png"|g' ./_site/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
