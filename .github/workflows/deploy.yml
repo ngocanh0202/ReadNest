@@ -42,6 +42,18 @@ jobs:
           touch ./_site/.nojekyll
           cp ./_site/index.html ./_site/404.html
 
+      - name: Fix resource paths for GitHub Pages
+        run: |
+          sed -i 's|<base href="/ReadNest" />|<base href="/ReadNest/" />|g' ./_site/index.html
+          sed -i 's|href="/js/|href="js/|g' ./_site/index.html
+          sed -i 's|href="/css/|href="css/|g' ./_site/index.html
+          sed -i 's|href="/favicon.png"|href="favicon.png"|g' ./_site/index.html
+          # Cũng sửa trong 404.html
+          sed -i 's|<base href="/ReadNest" />|<base href="/ReadNest/" />|g' ./_site/404.html
+          sed -i 's|href="/js/|href="js/|g' ./_site/404.html
+          sed -i 's|href="/css/|href="css/|g' ./_site/404.html
+          sed -i 's|href="/favicon.png"|href="favicon.png"|g' ./_site/404.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

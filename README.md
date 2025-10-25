@@ -46,11 +46,6 @@ It delivers a smooth and intelligent reading experience powered by **AI Studio i
 
 ## ⚙️ Installation
 
-### Prerequisites
-Make sure you have:
-- [.NET 8 SDK](https://dotnet.microsoft.com/download)
-- [Node.js](https://nodejs.org/)
-
 ### Steps
 1. **Clone the repository**
    ```bash
