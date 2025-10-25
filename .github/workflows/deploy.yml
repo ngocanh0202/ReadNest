@@ -12,16 +12,11 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,29 +26,26 @@ jobs:
         with:
           dotnet-version: '8.0.x'
           
-      - name: Publish Blazor WASM
+      - name: Publish
         run: |
-          cd Front-end/ReadNest-FE/ReadNest-FE
-          dotnet publish -c Release -o ./publish
-          
-      - name: Prepare deployment
-        run: |
+          cd Front-end/ReadNest-FE
+          dotnet restore ReadNest-FE.sln
+          dotnet publish ReadNest-FE.sln -c Release -p:UseAppHost=false
+          PUBLISH_DIR=$(find . -path "*/bin/Release/*/publish/wwwroot" -type d | head -n 1)
+          echo "Publish dir: $PUBLISH_DIR"
+          cd ../..
           mkdir -p ./_site
-          cp -r Front-end/ReadNest-FE/ReadNest-FE/publish/wwwroot/* ./_site/
+          cp -r "Front-end/ReadNest-FE/$PUBLISH_DIR/"* ./_site/
 
       - name: Add .nojekyll and 404.html
         run: |
           touch ./_site/.nojekyll
           cp ./_site/index.html ./_site/404.html
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './_site'
+          path: ./_site
 
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
