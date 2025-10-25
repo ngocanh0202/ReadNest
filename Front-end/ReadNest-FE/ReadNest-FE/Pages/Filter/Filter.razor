@@ -1,0 +1,166 @@
+﻿@page "/filter"
+@inject ReadNest_FE.Interfaces.INovelService NovelService
+@inject ReadNest_FE.Interfaces.ICategoryService CategoryService
+@using ReadNest_Models
+@using ReadNest_FE.Components.CardNovel
+@using ReadNest_FE.Components.Slide
+@using ReadNest_FE.Dictionaries
+@using ReadNest_Enums
+@using ReadNest_FE.Models
+@using ReadNest_FE.Components.Categories
+
+
+<div class="container !px-2">
+    <div class="!my-[1rem] flex items-center gap-2 font-bold">
+        <button class="btn-icon danger !text-white" disabled>
+            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em"><path d="M487.976 0H24.028C2.71 0-8.047 25.866 7.058 40.971L192 225.941V432c0 7.831 3.821 15.17 10.237 19.662l80 55.98C298.02 518.69 320 507.493 320 487.98V225.941l184.947-184.97C520.021 25.896 509.338 0 487.976 0z"></path></svg>
+        </button>
+        <p class="underline !text-lg !flex !flex-col !gap-1">
+            <div class="whitespace-nowrap">Advanced Search</div>
+            <div class="!h-[5px] !w-full !bg-red-300"></div>
+        </p>
+    </div>
+    <div class="tool-search">
+        <div class="search-field-name">
+            <div class="search-name-input">
+                <label>Name</label>
+                <InputText class="input" @bind-Value="novelFilter.NameNovel"></InputText>
+            </div>
+            <div class="search-name-button !h-[55px]">
+                <button @onclick="HandleSearch" class="btn-primary">Search</button>
+            </div>
+        </div>
+        <div class="search-row">
+            <div class="search-field search-field-author">
+                <label>Author</label>
+                <InputText class="input" @bind-Value="novelFilter.Author"></InputText>
+            </div>
+            <div class="search-field search-field-status">
+                <label>Status</label>
+                <InputSelect id="input-status" @bind-Value="novelFilter.NovelStatus" class="input input-select">
+                    <option value="">All</option>
+                    <option value="@NovelStatus.INPROGRESS">@Utils.Utils.FormatNovelStatus(@NovelStatus.INPROGRESS)</option>
+                    <option value="@NovelStatus.COMPLETED">@Utils.Utils.FormatNovelStatus(@NovelStatus.COMPLETED)</option>
+                    <option value="@NovelStatus.STOPPED">@Utils.Utils.FormatNovelStatus(@NovelStatus.STOPPED)</option>
+                </InputSelect>
+            </div>
+            <div class="search-field search-field-category">
+                <label>Category</label>
+                <button class="btn-icon btn-category" @onclick="HandleOpenCategories">
+                    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 11h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1zm10 0h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1zM4 21h6a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1zm13 0c2.206 0 4-1.794 4-4s-1.794-4-4-4-4 1.794-4 4 1.794 4 4 4z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+    <div class="novel-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        @if (novels is not null && novels.Any())
+        {
+            foreach(var n in novels)
+            {
+                <CardNovel novel="@n"></CardNovel>
+            }
+        }
+    </div>
+    <div class="!mb-[2rem] !flex flex-col !justify-between !items-center">
+        @if (novelFilter.Page < TotalPage)
+        {
+            <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+            <button class="btn-second !w-[200px]"
+                    disabled="@IsLoading"
+                    @onclick:stopPropagation="true"
+                    @onclick="() => HandleLoadNovel(novelFilter.Page!.Value, novelFilter.PageSize!.Value)">
+                @if (IsLoading)
+                {
+                    <span class="loader"></span>
+                }
+                else
+                {
+                    <text>Load more</text>
+                }
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] MainLayout? mainLayout { get; set; }
+    List<CategoryCheckBox>? CategorieCheckboxs { get; set; }
+    List<NovelResponese> novels = new List<NovelResponese>();
+    NovelFilter novelFilter = new NovelFilter() 
+    { 
+        NameNovel = string.Empty, 
+        Author = string.Empty, 
+        Categories = string.Empty, 
+        Page = 1, 
+        PageSize = 4, 
+        NovelStatus = NovelStatus.INPROGRESS 
+    };
+    bool IsLoading = false;
+    int TotalPage = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var paginationDataCategories = await CategoryService.GetValue(string.Empty, 1, 100);
+        List<Category> categoryList = paginationDataCategories?.Data?.Rows ?? new List<Category>();
+        CategorieCheckboxs = categoryList
+            .Select(c => new CategoryCheckBox
+            {
+                Id = c.Id,
+                Name = c.Name,
+                IsChecked = false
+            })
+            .ToList();
+    }  
+
+    private async Task HandleSearch()
+    {
+        try
+        {
+            string categoriesSelected = string.Join(";", 
+                CategorieCheckboxs!
+                    .Where(c => c.IsChecked == true)
+                    .Select(c => c.Name));         
+
+            novelFilter.Categories = string.IsNullOrEmpty(categoriesSelected) ? string.Empty : categoriesSelected;
+
+            var result = await NovelService.GetNovelsFilter(novelFilter);
+            if (result is null) return;
+            if (result.Success)
+            {
+                novels = result.Data?.Rows! ?? new List<NovelResponese>();
+                TotalPage = result.Data!.TotalPages;
+                novelFilter.Page = 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            mainLayout?.ShowAlert(ex.Message, "error");
+        }
+    }
+
+    private void HandleOpenCategories()
+    {
+        mainLayout?.ShowModal("Select categorie", @<Categories @bind-CategorieCheckboxs="CategorieCheckboxs"></Categories>, showCancel: false, showOk: false );
+    }
+
+    private async Task HandleLoadNovel(int page, int pageSize)
+    {
+        IsLoading = true;
+        novelFilter.Page = page + 1;
+        var result = await NovelService.GetNovelsFilter(novelFilter);
+        if (result.Success)
+        {
+            TotalPage = result.Data!.TotalPages;
+            if (result!.Data!.Rows.Any())
+                novels?.AddRange(result!.Data!.Rows);
+        }
+        else
+        {
+            mainLayout?.ShowAlert(result.Message, "error");
+        }
+        IsLoading = false;
+    }
+}

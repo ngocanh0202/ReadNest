@@ -1,0 +1,286 @@
+﻿.reader-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.reader-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding: 2rem;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.reader-nav-vertical {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    padding: 8px;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+}
+
+.reader-nav-vertical .nav-btn {
+    width: 48px;
+    height: 48px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.reader-nav-vertical .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.reader-nav-vertical .nav-btn:active {
+    transform: scale(0.95);
+}
+
+.reader-nav-vertical .nav-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.reader-nav-vertical .nav-btn + .nav-btn {
+    margin-top: 4px;
+}
+
+.reader-nav-horizontal {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: rgba(40, 40, 40, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    padding: 8px 12px;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.reader-nav-horizontal.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+}
+
+.reader-nav-horizontal .nav-btn {
+    width: 48px;
+    height: 48px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.reader-nav-horizontal .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.reader-nav-horizontal .nav-btn:active {
+    transform: scale(0.95);
+}
+
+.reader-nav-horizontal .nav-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.nav-btn.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.nav-btn.disabled:hover {
+    background: transparent;
+    transform: none;
+}
+
+.nav-btn.disabled:active {
+    transform: none;
+}
+
+.reader-settings {
+    min-width: 400px;
+    position: relative;
+}
+
+.setting-group {
+    margin-bottom: 1.5rem;
+}
+
+.setting-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.color-options {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.color-btn {
+    width: 50px;
+    height: 50px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.color-btn:hover {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.color-btn:active {
+    transform: scale(0.95);
+}
+
+.font-size-options {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.size-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    color: inherit;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.size-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.size-btn.active {
+    background: rgba(59, 130, 246, 0.5);
+    border-color: rgba(59, 130, 246, 0.8);
+}
+
+.setting-preview {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.setting-preview p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+    .setting-group.width{
+        display: none;
+    }
+
+    .reader-nav-vertical {
+        display: none;
+    }
+
+    .reader-nav-horizontal {
+        bottom: 10px;
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .reader-nav-horizontal .nav-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .reader-content {
+        padding: 0px;
+    }
+
+    .reader-settings {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .color-btn {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+@media (min-width: 769px) {
+    .reader-nav-horizontal {
+        display: none;
+    }
+}
+
+.reader-content article {
+    line-height: 1.8;
+    max-width: 850px;
+    margin: 0 auto;
+    transition: width 0.3s ease, font-size 0.3s ease;
+}
+
+.reader-content * article {
+    line-height: inherit;
+}
+
+.sliding-panel {
+    position: fixed;
+    top: 0;
+    right: -400px; 
+    width: 400px;
+    height: 100%;
+    background-color: #222;
+    color: #fff;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.5);
+    transition: right 0.3s ease-in-out;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.sliding-panel.open {
+    right: 0;
+}

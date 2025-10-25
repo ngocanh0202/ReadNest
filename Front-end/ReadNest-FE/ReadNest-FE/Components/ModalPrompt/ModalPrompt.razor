@@ -1,0 +1,77 @@
+﻿@inject ReadNest_FE.Interfaces.IPromptService PromptService
+@using ReadNest_Models
+
+<div class="max-h-[60vh] overflow-y-auto p-4 space-y-3 scrollbar-hide">
+    @if (Prompts is not null && Prompts.Any())
+    {
+        @foreach (var prompt in Prompts)
+        {
+            <div class="rounded-sm border border-gray-200 p-5 cursor-pointer transition-all duration-200 hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5 !my-3 !p-3"
+                 @onclick="() => HandleSetPrompt(prompt.P ?? string.Empty)">
+                <div class="flex justify-between items-center mb-3">
+                    @if (!string.IsNullOrEmpty(prompt.P))
+                    {
+                        <span class="px-3 py-1 rounded-full text-base font-medium">
+                            @prompt.P
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+        @if (!isLoading)
+        {
+            @if (Page != TotalPage)
+            {
+                <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                        @onclick:stopPropagation="true"
+                        @onclick="() => HandleLoadMorePrompt(Page, PageSize)">
+                    Load more prompt Default
+                </button>                
+            }
+        }
+        else
+        {
+            <span class="loader"></span>
+        }
+    }
+    else
+    {
+        <p>No prompt load</p>
+    }
+</div>
+
+@code{
+    [Parameter] public List<Prompt>? Prompts { get; set; }
+    [Parameter] public int Page { get; set; }
+    [Parameter] public int PageSize { get; set; }
+    [Parameter] public int? TotalPage { get; set; }
+    [CascadingParameter] private LayoutForAuthor? Layout { get; set; }
+    [Parameter] public Action<string>? OnSetPrompt { get; set; }
+    private bool isLoading = false;
+
+    void HandleSetPrompt(string p)
+    {
+        OnSetPrompt?.Invoke(p);
+        Layout?.CloseModal();
+    }
+
+    async Task HandleLoadMorePrompt(int page, int pageSize)
+    {
+        isLoading = true;
+        Page = page + 1;
+        var result = await PromptService.GetValue(string.Empty, Page, pageSize);
+        if (result.Success)
+        {
+            TotalPage = result.Data!.TotalPages;
+            if (result!.Data!.Rows.Any())
+                Prompts?.AddRange(result!.Data!.Rows);
+        }
+        else
+        {
+            Layout?.ShowAlert(result.Message,"error");
+        }
+        isLoading = false;
+    }
+
+}

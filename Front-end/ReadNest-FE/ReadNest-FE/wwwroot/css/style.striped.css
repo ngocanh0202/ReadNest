@@ -1,0 +1,16 @@
+﻿.striped-rows > *:nth-child(odd) {
+    background-color: var(--bg-primary);
+}
+
+.striped-rows > *:nth-child(even) {
+    background-color: var(--bg-secondary);
+}
+
+.striped-rows > *:nth-child(odd):hover {
+    background-color: var(--bg-secondary);
+    transition: background-color 0.2s ease;
+}
+
+.striped-rows > div > .btn-link:hover {
+    background-color: none !important;
+}

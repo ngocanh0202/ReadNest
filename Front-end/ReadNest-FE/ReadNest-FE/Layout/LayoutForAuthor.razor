@@ -1,0 +1,439 @@
+﻿@using ReadNest_FE.Components.Alert
+@using ReadNest_FE.Components.Loading
+@using ReadNest_FE.Components.Modal
+@using ReadNest_FE.Dictionaries
+@using Microsoft.JSInterop
+@using ReadNest_Models
+@using ReadNest_FE.Components.TableContent
+@using ReadNest_FE.Components.TransAi
+@using ReadNest_FE.Models
+@inherits LayoutComponentBase
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject ReadNest_FE.Router.Router Router
+@inject ReadNest_FE.Interfaces.IVolumnService VolumnService
+@inject ReadNest_FE.Services.UiEventService UiEventService
+@implements IDisposable
+
+<CascadingValue Value="this">
+    <div class="reader-container" style="background-color: @BackgroundColor; color: @TextColor;" @onclick="ToggleNavigation">
+        <div class="reader-content">
+            <article class="@WidthSize @FontSize">
+                @Body   
+            </article>
+        </div>
+
+
+        <div class="reader-nav-vertical" style="background-color: @BackgroundColor; color: @TextColor; border-color: @TextColor">
+            <button class="nav-btn" @onclick="OnShowProfile" @onclick:stopPropagation="true" title="Reader Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            <button class="nav-btn" @onclick="() => OnShowTableOfContents()" @onclick:stopPropagation="true" title="Table of Contents">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+            </button>
+            <button 
+                class="nav-btn @(CanUploadChapterContent ? "" : "disabled")"
+                disabled="@(CanUploadChapterContent ? false : true)"
+                @onclick="HandleToUploadContent" title="Upload content of chapter">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 384 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm65.18 216.01H224v80c0 8.84-7.16 16-16 16h-32c-8.84 0-16-7.16-16-16v-80H94.82c-14.28 0-21.41-17.29-11.27-27.36l96.42-95.7c6.65-6.61 17.39-6.61 24.04 0l96.42 95.7c10.15 10.07 3.03 27.36-11.25 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>
+            </button>
+            <a class="nav-btn" href="@Router.NovelUrl.Replace("{id}", NovelId)" title="Back to novel">
+                <svg stroke="currentColor" fill="none" stroke-width="0" viewBox="0 0 512 512" height="200px" width="200px">
+                        <path d="M146 64.1c54.1 0 100 27.9 100 82V446c0 2.2-3.1 2.7-3.8.7v-.1c-10.3-34.2-38.2-67.6-82.3-70.5-34.2-2.2-66.9 12.9-93.1 37.1-1.6 1.5-4.3 2.9-6.6 2.9h-4.5c-3.7 0-7.6-2.7-7.6-6.1V120.2C48 88.1 91.9 64.1 146 64.1zM366 64c-54.1 0-100 27.9-100 82v299.9c0 2.2 3.1 2.7 3.8.7v-.1c10.3-34.2 39.4-67.9 82.3-70.5 32.9-2 63.9 11 93.1 37.1 1.6 1.4 4.3 2.9 6.6 2.9h4.5c3.7 0 7.6-2.7 7.6-6.1V120c.1-32-43.8-56-97.9-56z">
+                        </path>
+                    </svg>
+            </a>
+            <button class="nav-btn" @onclick="OpenSlidingPanel" title="Open Ai Trans">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em"><path d="M13.5 2C13.5 2.44425 13.3069 2.84339 13 3.11805V5H18C19.6569 5 21 6.34315 21 8V18C21 19.6569 19.6569 21 18 21H6C4.34315 21 3 19.6569 3 18V8C3 6.34315 4.34315 5 6 5H11V3.11805C10.6931 2.84339 10.5 2.44425 10.5 2C10.5 1.17157 11.1716 0.5 12 0.5C12.8284 0.5 13.5 1.17157 13.5 2ZM0 10H2V16H0V10ZM24 10H22V16H24V10ZM9 14.5C9.82843 14.5 10.5 13.8284 10.5 13C10.5 12.1716 9.82843 11.5 9 11.5C8.17157 11.5 7.5 12.1716 7.5 13C7.5 13.8284 8.17157 14.5 9 14.5ZM16.5 13C16.5 12.1716 15.8284 11.5 15 11.5C14.1716 11.5 13.5 12.1716 13.5 13C13.5 13.8284 14.1716 14.5 15 14.5C15.8284 14.5 16.5 13.8284 16.5 13Z"></path></svg>
+            </button>
+        </div>
+
+        <div class="reader-nav-horizontal @(IsNavVisible ? "" : "hidden")" style="background-color: @BackgroundColor; color: @TextColor; border-color: @TextColor" @onclick:stopPropagation="true">
+            <button class="nav-btn" @onclick="OnShowProfile" title="Reader Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            <button class="nav-btn" @onclick="OnShowTableOfContents" title="Table of Contents">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+            </button>
+            <button 
+                class="nav-btn @(CanUploadChapterContent ? "" : "disabled")"
+                disabled="@(CanUploadChapterContent ? false : true)"
+                @onclick="HandleToUploadContent" title="Upload content of chapter">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 384 512" height="1em" width="1em"><path d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm65.18 216.01H224v80c0 8.84-7.16 16-16 16h-32c-8.84 0-16-7.16-16-16v-80H94.82c-14.28 0-21.41-17.29-11.27-27.36l96.42-95.7c6.65-6.61 17.39-6.61 24.04 0l96.42 95.7c10.15 10.07 3.03 27.36-11.25 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>
+            </button>
+            <a class="nav-btn" href="@Router.NovelUrl.Replace("{id}", NovelId)" title="Back to novel">
+                <svg stroke="currentColor" fill="none" stroke-width="0" viewBox="0 0 512 512" height="200px" width="200px">
+                    <path d="M146 64.1c54.1 0 100 27.9 100 82V446c0 2.2-3.1 2.7-3.8.7v-.1c-10.3-34.2-38.2-67.6-82.3-70.5-34.2-2.2-66.9 12.9-93.1 37.1-1.6 1.5-4.3 2.9-6.6 2.9h-4.5c-3.7 0-7.6-2.7-7.6-6.1V120.2C48 88.1 91.9 64.1 146 64.1zM366 64c-54.1 0-100 27.9-100 82v299.9c0 2.2 3.1 2.7 3.8.7v-.1c10.3-34.2 39.4-67.9 82.3-70.5 32.9-2 63.9 11 93.1 37.1 1.6 1.4 4.3 2.9 6.6 2.9h4.5c3.7 0 7.6-2.7 7.6-6.1V120c.1-32-43.8-56-97.9-56z">
+                    </path>
+                </svg>
+            </a>
+            <button class="nav-btn" @onclick="OpenSlidingPanel" title="Open Ai Trans">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em"><path d="M13.5 2C13.5 2.44425 13.3069 2.84339 13 3.11805V5H18C19.6569 5 21 6.34315 21 8V18C21 19.6569 19.6569 21 18 21H6C4.34315 21 3 19.6569 3 18V8C3 6.34315 4.34315 5 6 5H11V3.11805C10.6931 2.84339 10.5 2.44425 10.5 2C10.5 1.17157 11.1716 0.5 12 0.5C12.8284 0.5 13.5 1.17157 13.5 2ZM0 10H2V16H0V10ZM24 10H22V16H24V10ZM9 14.5C9.82843 14.5 10.5 13.8284 10.5 13C10.5 12.1716 9.82843 11.5 9 11.5C8.17157 11.5 7.5 12.1716 7.5 13C7.5 13.8284 8.17157 14.5 9 14.5ZM16.5 13C16.5 12.1716 15.8284 11.5 15 11.5C14.1716 11.5 13.5 12.1716 13.5 13C13.5 13.8284 14.1716 14.5 15 14.5C15.8284 14.5 16.5 13.8284 16.5 13Z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <TransAi @bind-IsPanelOpen="@IsPanelOpen" onInsertContent="OnInsertContent!"></TransAi>
+    <Alert Messages="@Alerts" OnClose="RemoveAlert" />
+    <Loading isLoading="@IsLoading"></Loading>
+    <Modal IsOpen="@ModalIsOpen"
+           Title="@ModalTitle"
+           ConfirmText="@ModalConfirmText"
+           CancelText="@ModalCancelText"
+           ShowCancel="@ModalShowCancel"
+           ShowOk="@ModalShowOk"
+           OnConfirm="ConfirmModal"
+           OnCancel="CancelModal">
+        @ModalContent
+    </Modal>
+</CascadingValue>
+
+@code {
+    public Func<string, Task>? OnInsertContent { get; set; }
+    public Func<Task>? OnClickUploadButton { get; set; }
+    private bool IsPanelOpen = false;
+    public bool CanUploadChapterContent { get; set; } = true;
+
+    public void SetCanUploadChapterContent(bool isCan)
+    {
+        CanUploadChapterContent = isCan;
+        StateHasChanged();
+    }
+
+    private void OpenSlidingPanel()
+    {
+        IsPanelOpen = true;
+    }
+
+    private void HandleToUploadContent()
+    {
+        OnClickUploadButton?.Invoke();
+    }
+
+    // =====================
+    // 🎨 Reader Settings
+    // =====================
+    private string BackgroundColor = "#1a1a1a";
+    private string TextColor = "#ffffff";
+    private string FontSize = "1.125rem";
+    private string WidthSize = "content-width-xl";
+    private bool IsNavVisible = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            CanUploadChapterContent = true;
+            UiEventService.OnShowAlert += ShowAlert;
+            UiEventService.OnSetLoading += SetLoading;
+            await LoadSettings();
+        }
+    }
+
+    private async Task LoadSettings()
+    {
+        try
+        {
+            var bgColor = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "readerBackgroundColor");
+            var txtColor = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "readerTextColor");
+            var fSize = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "readerFontSize");
+            var wSize = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "readerWidthSize");
+
+            if (!string.IsNullOrEmpty(bgColor))
+                BackgroundColor = bgColor;
+            if (!string.IsNullOrEmpty(txtColor))
+                TextColor = txtColor;
+            if (!string.IsNullOrEmpty(fSize))
+                FontSize = fSize;
+            if (!string.IsNullOrEmpty(wSize))
+                WidthSize = wSize;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"Error loading settings: {ex.Message}", "erro");
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "readerBackgroundColor", BackgroundColor);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "readerTextColor", TextColor);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "readerFontSize", FontSize);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "readerWidthSize", WidthSize);
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"Error loading settings: {ex.Message}", "erro");
+        }
+    }
+
+    private void ToggleNavigation()
+    {
+        IsNavVisible = !IsNavVisible;
+        StateHasChanged();
+    }
+
+    // =====================
+    // 📖 Navigation methods
+    // =====================
+    private string? CurrentChapterId { get; set; }
+    private string? PrevChapterId { get; set; }
+    private string? NextChapterId { get; set; }
+    private string? NovelId { get; set; }
+    private List<VolumnContent>? VolumnContents { get; set; }
+    public Action<string>? OnNotifyChangeChapter;
+
+    protected override void OnInitialized()
+    {
+        CurrentChapterId = null;
+        PrevChapterId = null;
+        NextChapterId = null;
+        base.OnInitialized();
+    }
+
+    public void LoadChapters(string newNovelId, string newCurrentChapterId, string newNextChapterId, string newPrevChapterId)
+    {
+        NovelId = newNovelId;
+        CurrentChapterId = newCurrentChapterId;
+        NextChapterId = newNextChapterId;
+        PrevChapterId = newPrevChapterId;
+        StateHasChanged();
+
+    }
+    public void SetCurrentChapterId(string newCurrentChapterId)
+    {
+        CurrentChapterId = newCurrentChapterId;
+        Navigation.NavigateTo(Router.ChapterUrl.Replace("{id}", CurrentChapterId));
+        OnNotifyChangeChapter?.Invoke(CurrentChapterId!);
+    }
+
+    private async void OnShowTableOfContents()
+    {
+        try
+        {
+            if (CurrentChapterId == null) return;
+            if (VolumnContents == null )
+            {
+                var response = await VolumnService.GetVolumnContentByChapterId(CurrentChapterId);
+                if (response.Success)
+                {
+                    VolumnContents = response.Data;
+                }
+            }
+
+            if (VolumnContents != null)
+            {
+                ShowModal(
+                    "Table of Contents",
+                    @<TableContent CurrentChapterId="@CurrentChapterId" VolumnContents=VolumnContents></TableContent>,
+                    showCancel: false,
+                    showOk: false
+                );
+            }
+        }
+        catch(Exception ex)
+        {
+            ShowAlert(ex.Message, "erro");
+        }
+    }
+
+    private void OnShowProfile()
+    {
+        ShowModal(
+            "Reader Settings",
+            @<div class="reader-settings">
+            <div class="setting-group">
+                <label>Background Color:</label>
+                <div class="color-options">
+                    <button class="color-btn" style="background-color: #1a1a1a" @onclick='() => SetBackgroundColor("#1a1a1a")'></button>
+                    <button class="color-btn" style="background-color: #222" @onclick='() => SetBackgroundColor("#222")'></button>
+                    <button class="color-btn" style="background-color: #f5f5dc" @onclick='() => SetBackgroundColor("#f5f5dc")'></button>
+                    <button class="color-btn" style="background-color: #ffffff" @onclick='() => SetBackgroundColor("#ffffff")'></button>
+                    <button class="color-btn" style="background-color: #1e1e2e" @onclick='() => SetBackgroundColor("#1e1e2e")'></button>
+                </div>
+            </div>
+
+        <div class="setting-group">
+            <label>Text Color:</label>
+            <div class="color-options">
+                <button class="color-btn" style="background-color: #ffffff" @onclick='() => SetTextColor("#ffffff")'></button>
+                <button class="color-btn" style="background-color: #e0e0e0" @onclick='() => SetTextColor("#e0e0e0")'></button>
+                <button class="color-btn" style="background-color: #333333" @onclick='() => SetTextColor("#333333")'></button>
+                <button class="color-btn" style="background-color: #000000" @onclick='() => SetTextColor("#000000")'></button>
+                <button class="color-btn" style="background-color: #8b7355" @onclick='() => SetTextColor("#8b7355")'></button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <label>Font Size:</label>
+            <div class="font-size-options">
+            <button class='size-btn @(FontSize == "font-size-s" ? "active" : "")' @onclick='() => SetFontSize("font-size-s")'>Small</button>
+            <button class='size-btn @(FontSize == "font-size-m" ? "active" : "")' @onclick='() => SetFontSize("font-size-m")'>Medium</button>
+            <button class='size-btn @(FontSize == "font-size-l" ? "active" : "")' @onclick='() => SetFontSize("font-size-l")'>Large</button>
+            <button class='size-btn @(FontSize == "font-size-xl" ? "active" : "")' @onclick='() => SetFontSize("font-size-xl")'>X-Large</button>
+            </div>
+        </div>
+
+        <div class="setting-group width">
+            <label>Width:</label>
+            <div class="font-size-options">
+                <button class='size-btn @(WidthSize == "width-s" ? "active" : "")' @onclick='() => SetWidthSize("width-s")'>Small</button>
+                <button class='size-btn @(WidthSize == "width-m" ? "active" : "")' @onclick='() => SetWidthSize("width-m")'>Medium</button>
+                <button class='size-btn @(WidthSize == "width-l" ? "active" : "")' @onclick='() => SetWidthSize("width-l")'>Large</button>
+                <button class='size-btn @(WidthSize == "width-xl" ? "active" : "")' @onclick='() => SetWidthSize("width-xl")'>X-Large</button>
+                <button class='size-btn @(WidthSize == "width-xxl" ? "active" : "")' @onclick='() => SetWidthSize("width-xxl")'>XX-Large</button>
+            </div>
+        </div>
+
+        <div class="setting-preview @FontSize" style=@($"background-color: {BackgroundColor}; color: {TextColor};")>
+                <p>Preview: The quick brown fox jumps over the lazy dog.</p>
+            </div>
+        </div>
+    ,
+            showCancel: false,
+            showOk: false
+        );
+    }
+
+    private void SetBackgroundColor(string color)
+    {
+        BackgroundColor = color;
+        StateHasChanged();
+        _ = SaveSettings();
+    }
+
+    private void SetTextColor(string color)
+    {
+        TextColor = color;
+        StateHasChanged();
+        _ = SaveSettings();
+    }
+
+    private void SetFontSize(string size)
+    {
+        FontSize = size;
+        StateHasChanged();
+        _ = SaveSettings();
+    }
+
+    private void SetWidthSize(string widthSize)
+    {
+        WidthSize = widthSize;
+        StateHasChanged();
+        _ = SaveSettings();
+    }
+
+    // =====================
+    // 🌀 Loading management
+    // =====================
+    private bool IsLoading = false;
+    public void SetLoading(bool isload)
+    {
+        IsLoading = isload;
+        StateHasChanged();
+    }
+
+    // =====================
+    // 🔔 Alert management
+    // =====================
+    private List<AlertMessageItem> Alerts = new();
+    public void ShowAlert(string message, string type = "info")
+    {
+        var alert = new AlertMessageItem { Message = message, Type = type };
+        Alerts.Add(alert);
+        StateHasChanged();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(5000);
+            RemoveAlert(alert.Id);
+        });
+    }
+
+    private void RemoveAlert(Guid id)
+    {
+        var item = Alerts.FirstOrDefault(a => a.Id == id);
+        if (item != null)
+        {
+            Alerts.Remove(item);
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // =====================
+    // 🪟 Modal management
+    // =====================
+    private bool ModalIsOpen = false;
+    private string ModalTitle = "Infor";
+    private string ModalConfirmText = "OK";
+    private string ModalCancelText = "Cancel";
+    private bool ModalShowCancel = true;
+    private bool ModalShowOk = true;
+    private RenderFragment? ModalContent;
+    private EventCallback? ModalOnConfirm;
+    private EventCallback? ModalOnCancel;
+
+    public void ShowModal(
+        string title,
+        RenderFragment content,
+        EventCallback? onConfirm = null,
+        EventCallback? onCancel = null,
+        string confirmText = "OK",
+        string cancelText = "Cancel",
+        bool showCancel = true,
+        bool showOk = true
+    )
+    {
+        ModalTitle = title;
+        ModalContent = content;
+        ModalConfirmText = confirmText;
+        ModalCancelText = cancelText;
+        ModalShowCancel = showCancel;
+        ModalShowOk = showOk;
+        ModalOnConfirm = onConfirm;
+        ModalOnCancel = onCancel;
+        ModalIsOpen = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmModal()
+    {
+        if (ModalOnConfirm.HasValue)
+            await ModalOnConfirm.Value.InvokeAsync();
+        CloseModal();
+    }
+
+    private async Task CancelModal()
+    {
+        if (ModalOnCancel.HasValue)
+            await ModalOnCancel.Value.InvokeAsync();
+        CloseModal();
+    }
+
+    public void CloseModal()
+    {
+        ModalIsOpen = false;
+        StateHasChanged();
+    }
+    public void Dispose()
+    {
+        PrevChapterId = null;
+        NextChapterId = null;
+        CurrentChapterId = null;
+    }
+}

@@ -1,0 +1,118 @@
+﻿@using ReadNest_Models
+@using ReadNest_FE.Components.DisplayContent
+@using ReadNest_FE.Utils
+@using ReadNest_FE.Components.Editor
+@using ReadNest_FE.Components.ToggleModeSwitch
+@using ReadNest_FE.Models
+@layout LayoutForReader
+@inject ReadNest_FE.Interfaces.IChapterService ChapterService
+@inject ReadNest_FE.Interfaces.IContentService ContentService
+@page "/chapter/{Id}"
+
+<PageTitle>@(currentChapter?.ChapterName ?? "Chapter")</PageTitle>
+
+<div class="flex flex-col justify-center">
+    @if (currentChapter is not null)
+    {
+        <div class="reader-chapter">
+            <div class="title !line-clamp-10 break-all">@currentChapter.VolumnName</div>
+            <div class="sub-title !line-clamp-10 break-all">@currentChapter.ChapterName</div>
+            <div class="sub-p">
+                Length: @lenghWords words – Updated: @timeAgo
+            </div>
+        </div>
+    }   
+    <div class="reader-text mb-4 mt-[2rem]">
+        @if (Contents is not null && Contents.Any())
+        {
+            @foreach (var c in Contents)
+            {
+                if (!string.IsNullOrEmpty(c.ImageId))
+                {
+                    <p>
+                        <img src="@c.ImageUrl" />
+                    </p>
+                }
+                else
+                {
+                    <p class="!p-2">
+                        @((MarkupString)c.P!)
+                    </p>
+                }
+            }
+        }
+    </div>
+</div>
+
+@code {
+
+    // SETTING //
+    [Parameter] public string? Id { get; set; }
+    [CascadingParameter] private LayoutForReader? Layout { get; set; }
+    Response<DetailChapter>? response;
+    DetailChapter? detailChapter;
+    ChapterOverview? currentChapter;
+    string? lenghWords;
+    string? timeAgo;
+    List<ContentDto>? Contents { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnLoadChapter();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Layout != null)
+            {
+                if (Layout is not null)
+                {
+                    Layout.OnNotifyChangeChapter -= OnChangeChapter;
+                    Layout.OnNotifyChangeChapter += OnChangeChapter;
+                }
+            }
+        }
+    }
+
+    async Task OnLoadChapter()
+    {
+        try
+        {
+            response = await ChapterService.GetDetailChapterById(Id!);
+            if (response?.Success == true && response.Data is not null)
+            {
+                detailChapter = response.Data;
+
+                if (detailChapter?.Contents is not null)
+                {
+                    Contents = detailChapter?.Contents;
+                }
+                currentChapter = detailChapter?.CurrentChapter;
+                lenghWords = Utils.GetLengthWords(detailChapter?.Contents!);
+                var updateDate = currentChapter?.UpdateDate;
+                if (updateDate.HasValue)
+                {
+                    timeAgo = Utils.GetTimeAgo(updateDate.Value);
+                }
+                Layout?.LoadChapters(
+                    detailChapter?.CurrentChapter?.NovelId!,
+                    detailChapter?.CurrentChapter?.Id!,
+                    detailChapter?.NextChapter?.Id!,
+                    detailChapter?.PrevChapter?.Id!
+                );
+            }
+        }
+        catch(Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message, "error");
+        }
+    }
+
+    async void OnChangeChapter(string newChapterId)
+    {
+        Id = newChapterId;
+        await OnLoadChapter();
+    }
+}

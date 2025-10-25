@@ -1,0 +1,60 @@
+﻿@using ReadNest_Models
+
+<p @onmousedown="StartPress"
+   @onmouseup="EndPress"
+   @ontouchstart="StartPress"
+   @ontouchend="EndPress">
+    @Content?.P
+</p>
+
+@code {
+    [CascadingParameter] private LayoutForAuthor? Layout { get; set; }
+    [Parameter] public ContentDto? Content { get; set; }
+
+    private System.Timers.Timer? pressTimer;
+    private readonly double holdTime = 450;
+
+    private void StartPress()
+    {
+        pressTimer?.Stop();
+
+        pressTimer = new System.Timers.Timer(holdTime);
+        pressTimer.Elapsed += (_, __) =>
+        {
+            InvokeAsync(ShowModal);
+            pressTimer?.Stop();
+        };
+        pressTimer.AutoReset = false;
+        pressTimer.Start();
+    }
+
+    private void EndPress()
+    {
+        pressTimer?.Stop();
+    }
+
+    private void ShowModal()
+    {
+        Layout?.ShowModal(
+            "VN/RAW",
+            @<div class="space-y-4">
+                <div>
+                    <div class="text-sm font-semibold mb-1 text-gray-300">RAW</div>
+                    <div class="reader-content border rounded-lg p-3 max-h-60 overflow-auto !p-1">
+                        @Content?.P
+                    </div>
+                </div>
+                <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+                <div>
+                    <div class="text-sm font-semibold mb-1 text-gray-300">VN</div>
+                        <div class="reader-content border rounded-lg p-3 max-h-60 overflow-auto !p-1">
+                        @Content?.P
+                    </div>
+                </div>
+
+            </div>,
+            showCancel: false,
+            showOk: false
+        );
+    }
+}

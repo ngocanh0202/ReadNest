@@ -1,0 +1,28 @@
+{
+  "name": "vite-project",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "watch": "chokidar \"../**/*.razor\" \"src/**/*.{ts,js}\" \"src/**/*.css\" -c \"tsc && vite build\"",
+    "watch:dotnet": "dotnet watch --project ../ReadNest_FE.csproj",
+    "watch:all": "concurrently \"npm run watch\" \"npm run watch:dotnet\""
+  },
+  "devDependencies": {
+    "@types/jquery": "^3.5.33",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "jquery": "^3.7.1",
+    "quill": "^2.0.3",
+    "tailwindcss": "^4.1.14",
+    "tinymce": "^8.1.2"
+  }
+}

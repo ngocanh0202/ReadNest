@@ -1,0 +1,137 @@
+﻿@using ReadNest_Models
+@using ReadNest_FE.Components.DisplayContent
+@using ReadNest_FE.Utils
+@using ReadNest_FE.Components.Editor
+@using ReadNest_FE.Components.ToggleModeSwitch
+@using ReadNest_FE.Models
+@layout LayoutForAuthor
+@inject ReadNest_FE.Interfaces.IChapterService ChapterService
+@inject ReadNest_FE.Interfaces.IContentService ContentService
+@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject NavigationManager Navigation
+@implements IDisposable
+@page "/action/update-chapter/{Id}"
+
+<PageTitle>Update content of chapter</PageTitle>
+
+<div class="flex flex-col justify-center">
+    @if (currentChapter is not null)
+    {
+        <div class="reader-chapter">
+            <div class="title !line-clamp-10 break-all">@currentChapter.VolumnName</div>
+            <div class="sub-title !line-clamp-10 break-all">@currentChapter.ChapterName</div>
+            <div class="sub-p">
+                Length: @lenghWords words
+            </div>
+        </div>
+    }   
+    <div class="reader-text">
+        <Editor @bind-content="Content"></Editor>
+    </div>
+</div>
+
+@code {
+
+    // SETTING //
+    [Parameter] public string? Id { get; set; }
+    [CascadingParameter] private LayoutForAuthor? Layout { get; set; }
+    Response<DetailChapter>? response;
+    DetailChapter? detailChapter;
+    ChapterOverview? currentChapter;
+    string? lenghWords;
+    string? timeAgo;
+    string? Content { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnLoadChapter();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (firstRender && (Store.HasContributePermission == false || Store.HasContributePermission is null) && !Store.IsModeAction)
+            {
+                Navigation.NavigateTo(Router.HomeUrl);
+            }
+            if (Layout != null)
+            {
+                if (Layout is not null)
+                {
+                    Layout.OnClickUploadButton -= HandleUploadContent;
+                    Layout.OnClickUploadButton += HandleUploadContent;
+                    Layout.OnNotifyChangeChapter -= OnChangeChapter;
+                    Layout.OnNotifyChangeChapter += OnChangeChapter;
+                }
+            }
+        }
+    }
+
+    async Task OnLoadChapter()
+    {
+        try
+        {
+            Console.WriteLine("Load");
+            response = await ChapterService.GetDetailChapterById(Id!);
+            if (response?.Success == true && response.Data is not null)
+            {
+                detailChapter = response.Data;
+
+                if (detailChapter?.Contents is not null)
+                {
+                    Content = Utils.ConvertContentListToHtml(detailChapter.Contents);
+                    Layout?.OnInsertContent?.Invoke(Content);
+                }
+                currentChapter = detailChapter?.CurrentChapter;
+                lenghWords = Utils.GetLengthWords(detailChapter?.Contents!);
+                var updateDate = currentChapter?.UpdateDate;
+                if (updateDate.HasValue)
+                {
+                    timeAgo = Utils.GetTimeAgo(updateDate.Value);
+                }
+                Layout?.LoadChapters(
+                    detailChapter?.CurrentChapter?.NovelId!,
+                    detailChapter?.CurrentChapter?.Id!,
+                    detailChapter?.NextChapter?.Id!,
+                    detailChapter?.PrevChapter?.Id!
+                );
+            }
+        }
+        catch(Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message, "error");
+        }
+    }
+
+    async void OnChangeChapter(string newChapterId)
+    {
+        Id = newChapterId;
+        await OnLoadChapter();
+    }
+
+    async Task HandleUploadContent()
+    {
+        try
+        {
+            List<ContentDto>? contentDtos = Utils.ParseEditorContentToList(Content!, Id!);
+            await ChapterService.PostMutiple(contentDtos, Id!);
+            lenghWords = Utils.GetLengthWords(contentDtos);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message, "error");
+        }
+    }
+
+    public void Dispose()
+    {
+        if (Layout != null)
+        {
+            Layout.OnClickUploadButton -= HandleUploadContent;
+            Layout.OnNotifyChangeChapter -= OnChangeChapter;
+        }
+    }
+}

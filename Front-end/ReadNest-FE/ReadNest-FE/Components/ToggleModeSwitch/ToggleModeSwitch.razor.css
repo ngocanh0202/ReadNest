@@ -1,0 +1,85 @@
+﻿.toggle-mode-switch {
+    position: relative;
+    width: 120px;
+    height: 56px;
+    margin: 0 auto 10px auto; 
+    overflow: hidden;
+    border-radius: var(--border-radius-sm);
+}
+
+.toggle-mode-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 3;
+    margin: 0;
+}
+
+.toggle-mode-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+}
+
+.toggle-mode-bg {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: var(--bg-secondary);
+    transition: 0.3s ease all;
+    z-index: 1;
+}
+
+.toggle-mode-label::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 48px;
+    height: 44px;
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius-sm);
+    transition: 0.3s ease all;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-mode-label span {
+    position: absolute;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1;
+    transition: 0.3s ease all;
+    z-index: 1;
+}
+
+.toggle-mode-label span:first-child {
+    left:19px;
+    color: var(--text-primary);
+}
+
+.toggle-mode-label .toggle-icon {
+    right: 19px;
+    color: var(--text-secondary);
+}
+
+.toggle-mode-input:checked + .toggle-mode-label::before {
+    left: 66px;
+}
+
+.toggle-mode-input:checked + .toggle-mode-label span:first-child {
+    color: var(--text-secondary);
+}
+
+.toggle-mode-input:checked + .toggle-mode-label .toggle-icon {
+    color: var(--text-primary);
+}

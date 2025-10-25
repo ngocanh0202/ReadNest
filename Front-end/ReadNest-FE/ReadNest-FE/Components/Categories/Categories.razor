@@ -1,0 +1,19 @@
+﻿@using ReadNest_FE.Models
+<div class="categories-container">
+    @if (CategorieCheckboxs != null)
+    {
+        foreach (var category in CategorieCheckboxs)
+        {
+            <label class="category-item">
+                <InputCheckbox @bind-Value="category.IsChecked"
+                               class="form-check-input" />
+                <span>@category.Name</span>
+            </label>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public List<CategoryCheckBox>? CategorieCheckboxs { get; set; }
+    [Parameter] public EventCallback<List<CategoryCheckBox>> CategorieCheckboxsChanged { get; set; }
+}

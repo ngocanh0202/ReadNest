@@ -1,0 +1,19 @@
+﻿.reader-text p {
+    margin-bottom: 1.75rem;
+    text-align: justify;
+}
+
+.reader-chapter .title {
+    font-weight: 600;
+    text-align: center;
+}
+
+.reader-chapter .sub-title {
+    font-weight: 600;
+    text-align: center;
+}
+
+.reader-chapter .sub-p {
+    font-weight: 600;
+    text-align: center;
+}

@@ -1,0 +1,191 @@
+﻿@page "/profile"
+@using ReadNest_Models
+@using ReadNest_FE.Models
+@using ReadNest_FE.Components.ToggleModeSwitch
+@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject ReadNest_FE.Interfaces.IAuthService AuthService
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Profile</PageTitle>
+
+<div class="min-h-screen !px-5 !pt-[80px]">
+    <div class="max-w-6xl !my-[30px] !mx-auto">
+        <div class="flex flex-col md:flex-row gap-8">
+            <div class="w-full md:w-64 flex-shrink-0">
+                <h1 class="text-2xl font-bold mb-6">Profile</h1>
+                <div class="flex flex-row md:flex-col gap-4 overflow-x-auto">
+                    <button class="text-left px-4 py-2 rounded border-b-2 border-current whitespace-nowrap">
+                        Change password
+                    </button>
+                    @if (Store.HasContributePermission == true && Store.HasContributePermission is not null)
+                    {
+                        <ToggleModeSwitch @bind-isChecked="Store.IsModeAction" onCheckedChanged="handleChangeMode"></ToggleModeSwitch>
+                    }
+                </div>
+            </div>
+
+            <div class="hidden md:block w-px bg-gray-300"></div>
+
+            <div class="block md:hidden h-px bg-gray-300"></div>
+
+            <div class="flex-1">
+                <div class="flex flex-col gap-2 items-center w-full max-w-2xl">
+                    <div class="flex flex-col items-center text-center mb-4">
+                        <h2 class="text-xl">User Name: @Store.UserName</h2>
+                    </div>
+
+                    <div class="w-full">
+                        <div class="form-group">
+                            <label for="password" class="!inline">Old password</label>
+                            <span class="text-red-600">*</span>
+                            <div>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <InputText id="input-old-password"
+                                               type="password"
+                                               class="input"
+                                               placeholder="Enter old password"
+                                               @bind-Value="oldPassword"
+                                               disabled="@isLoading"
+                                               autocomplete="off" />
+                                </div>
+                                <p class="validation-message" for="input-old-password"></p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="!inline">New password</label>
+                            <span class="text-red-600">*</span>
+                            <div>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <InputText id="input-new-password"
+                                               type="password"
+                                               class="input"
+                                               placeholder="Enter new password"
+                                               @bind-Value="newPassword"
+                                               disabled="@isLoading"
+                                               autocomplete="off" />
+                                </div>
+                                <p class="validation-message" for="input-new-password"></p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="!inline">Repeat password</label>
+                            <span class="text-red-600">*</span>
+                            <div>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <InputText id="input-passwordRepeat"
+                                               type="password"
+                                               class="input"
+                                               placeholder="Repeat your password"
+                                               @bind-Value="repeatPassword"
+                                               disabled="@isLoading"
+                                               autocomplete="off" />
+                                </div>
+                                <p class="validation-message" for="input-passwordRepeat"></p>
+                            </div>
+                        </div>
+
+                        <button @onclick="OnChangePassword" type="submit"
+                                disabled="@isLoading"
+                                class="btn-primary @(isLoading ? "disabled" : "")">
+                            Change password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [CascadingParameter] private MainLayout? Layout { get; set; }
+    private string? oldPassword;
+    private string? newPassword;
+    private string? repeatPassword;
+    private bool isLoading;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var rulesOldPassword = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Password is required." },
+                new() { Rule = "value.length < 8", Message = "Password must be at least 8 characters." },
+            };
+            var rulesNewPassword = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Password is required." },
+                new() { Rule = "value.length < 8", Message = "Password must be at least 8 characters." },
+                new() { Rule = "!/^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$/.test(value)", Message = "Password must contain letters, numbers, and special characters." }
+            };
+            var rulesPasswordRepeat = new List<ValidationRule>
+            {
+                new() { Rule = "value", Message = "Password not same" }
+            };
+
+            await JS.InvokeVoidAsync("setDynamicRules", "input-old-password", rulesOldPassword);
+            await JS.InvokeVoidAsync("setDynamicRules", "input-new-password", rulesNewPassword);
+            await JS.InvokeVoidAsync("setDynamicRules", "input-passwordRepeat", rulesPasswordRepeat);
+        }
+    }
+
+    private async Task<bool> ValidateInputs()
+    {
+        bool isValidOldPassword = await JS.InvokeAsync<bool>("checkDynamicRules", "input-old-password", oldPassword ?? string.Empty);
+        bool isValidNewPassword = await JS.InvokeAsync<bool>("checkDynamicRules", "input-new-password", newPassword ?? string.Empty);
+        bool isValidPasswordRepeat = await JS.InvokeAsync<bool>("checkDynamicRules", "input-passwordRepeat", !newPassword?.Equals(repeatPassword));
+
+        return isValidOldPassword && isValidPasswordRepeat && isValidNewPassword;
+    }
+
+    private async Task OnChangePassword()
+    {
+        if (!await ValidateInputs()) return;
+
+        isLoading = true;
+
+        try
+        {
+            var result = await AuthService.ChangePassword(new UserChangePassword()
+            {
+                UserName = Store.UserName,
+                OldPassword = oldPassword,
+                NewPassword = newPassword
+            });
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert($"❌ Login failed: {ex.Message}", "error");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void handleChangeMode(bool isModeAction)
+    {
+        Nav.NavigateTo(Router.HomeUrl);
+        StateHasChanged();
+    }
+}

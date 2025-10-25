@@ -1,0 +1,86 @@
+﻿@using ReadNest_Models
+@inject NavigationManager Nav;
+@inject ReadNest_FE.Router.Router Router
+
+<div class="table-content">
+    @if (VolumnContents != null && VolumnContents.Count > 0)
+    {
+        @foreach (var volumnVsChapter in VolumnContents)
+        {
+            <div class="volume-block">
+                <div class="volume-header">
+                    <p class="truncate">@volumnVsChapter.Name</p>
+                    <button @onclick="() => ToggleVolumn(volumnVsChapter.Id!)" class="btn-icon">
+                        @if (volumnVsChapter.IsExpanded == true || volumnVsChapter.IsExpanded == null)
+                        {
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293
+                                            3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4
+                                            4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414
+                                            0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4
+                                            4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        }
+                    </button>
+                </div>
+
+                @if (volumnVsChapter.IsExpanded == true || volumnVsChapter.IsExpanded == null)
+                {
+                    <div class="chapter-list">
+                        @if (volumnVsChapter.Chapters != null && volumnVsChapter.Chapters.Count > 0)
+                        {
+                            @foreach (var chapter in volumnVsChapter.Chapters)
+                            {
+                                <button class="chapter-item truncate @(chapter.Id!.Equals(CurrentChapterId) ? "active" : "")"
+                                        disabled="@chapter.Id.Equals(CurrentChapterId)"
+                                     @onclick="() => OnChapterSelected(chapter.Id!)">
+                                    @chapter.Name
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <div class="chapter-item empty">No chapters available</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-list">No volumes available</div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<VolumnContent>? VolumnContents { get; set; }
+    [CascadingParameter] private LayoutForAuthor? LayoutAuthor { get; set; }
+    [CascadingParameter] private LayoutForReader? LayoutReader { get; set; }
+    [Parameter] public string? CurrentChapterId { get; set; }
+
+    private void ToggleVolumn(string volumnId)
+    {
+        var target = VolumnContents?.FirstOrDefault(v => v.Id == volumnId);
+        if (target != null)
+        {
+            target.IsExpanded = !(target.IsExpanded ?? true);
+        }
+    }
+
+    private void OnChapterSelected(string chapterId)
+    {
+        Nav.NavigateTo(Router.ChapterUrl.Replace("{id}", chapterId));
+        // Todo: fix after
+        LayoutAuthor?.SetCurrentChapterId(chapterId);
+        LayoutAuthor?.CloseModal();
+        LayoutReader?.SetCurrentChapterId(chapterId);
+        LayoutReader?.CloseModal();
+    }
+}

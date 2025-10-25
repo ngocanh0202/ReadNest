@@ -1,0 +1,92 @@
+﻿@inject IJSRuntime JS
+@implements IDisposable
+@inject ReadNest_FE.Interfaces.IImageService ImageService
+@using ReadNest_Models
+@using ReadNest_FE.Models
+
+<div id="editor-container-@id"></div>
+
+@code {
+    [CascadingParameter] private LayoutForAuthor? Layout { get; set; }
+    [Parameter] public string? id { get; set; } = "0";
+    [Parameter] public string? content { get; set; }
+    [Parameter] public EventCallback<string> contentChanged { get; set; }
+    [Parameter] public EventCallback<string> OnSetContent { get; set; }
+    private DotNetObjectReference<Editor>? dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            if(Layout is not null)
+            {
+                Layout.OnInsertContent += HandleInsertFromLayout;                
+            }
+            await JS.InvokeVoidAsync("reader.removeDom", ".ql-toolbar.ql-snow");
+            await JS.InvokeVoidAsync("editor.init", $"#editor-container-{id}", dotNetRef);
+            await JS.InvokeVoidAsync("editor.setContent", $"#editor-container-{id}", content);
+        }
+    }
+
+
+    async Task HandleInsertFromLayout(string strContent)
+    {
+        content = strContent;
+        await JS.InvokeVoidAsync("editor.setContentText", $"#editor-container-{id}", content);
+    }
+
+    [JSInvokable]
+    public async Task OnEditorUploadImage(string contentType, byte[] fileBytes)
+    {
+        try
+        {
+            Layout?.SetCanUploadChapterContent(false); 
+            var tempFileName = $"{Guid.NewGuid()}.tmp";
+            var tempFilePath = Path.Combine(Path.GetTempPath(), tempFileName);
+
+            await File.WriteAllBytesAsync(tempFilePath, fileBytes);
+
+            using var fileStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read);
+            var response = await ImageService.PostSingle(fileStream, contentType);
+            File.Delete(tempFilePath);
+            if (response is null) return;
+
+            if (response.Success)
+            {
+                await JS.InvokeVoidAsync("editor.replacePlaceholderWithImage", 
+                                        $"#editor-container-{id}", 
+                                        response.Data?.ImageUrl, 
+                                        response.Data?.Id, dotNetRef);
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("editor.showUploadError", $"#editor-container-{id}", response.Message, dotNetRef);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("editor.showUploadError", $"#editor-container-{id}", ex.Message);
+        }
+        finally
+        {
+            Layout?.SetCanUploadChapterContent(true);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnEditorContentChanged(string content)
+    {
+        await contentChanged.InvokeAsync(content);
+    }
+
+    public void Dispose()
+    {
+        if(Layout is not null)
+        {
+            Layout.OnInsertContent -= HandleInsertFromLayout;
+        }
+        _ = JS.InvokeVoidAsync("editor.destroy", $"#editor-container-{id}");
+        _ = JS.InvokeVoidAsync("reader.removeDom", ".ql-toolbar.ql-snow");
+    }
+}

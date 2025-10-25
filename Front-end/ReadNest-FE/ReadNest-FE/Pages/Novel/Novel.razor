@@ -1,0 +1,224 @@
+﻿@page "/novel/{Id}"
+@using ReadNest_FE.Models
+@using ReadNest_Models
+@using ReadNest_FE.Utils
+@inject ReadNest_FE.Interfaces.INovelService NovelService
+@inject ReadNest_FE.Router.Router Router
+@inject NavigationManager Navigation
+@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Services.UiEventService UiEventService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Novel Detail</PageTitle>
+
+<div class="container py-8 px-4 md:px-6 lg:px-8">
+    @if (isLoading)
+    {
+        <div class="text-center text-gray-400 py-10">Loading...</div>
+    }
+    else if (detailNovel == null)
+    {
+        <div class="text-center text-red-500 py-10">Novel not found.</div>
+    }
+    else
+    {
+        <div class="card !p-[1rem] shadow-xl !mb-[10px]" style="--bg-primary: var(--bg-primary); --border-color: var(--border-color);">
+
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="w-full md:w-1/4 flex-shrink-0">
+                    <img src="@detailNovel.ImageUrl"
+                         alt="@detailNovel.Name"
+                         class="rounded-2xl w-full aspect-[2/3] object-cover border border-border-color" />
+                </div>
+
+                <div class="flex-1 flex flex-col gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold">@detailNovel.Name</h1>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach (var cat in detailNovel.Categories ?? new List<Category>())
+                            {
+                                <span class="select-none !px-3 !py-1 !bg-bg-secondary !rounded-lg !text-sm !border !border-border-color hover:!bg-bg-tertiary hover:scale-105 hover:!shadow-md active:scale-95 transition-all duration-200 ease-in-out cursor-pointer">@cat.Name</span>
+                            }
+                        </div>
+
+                    </div>
+
+                    <div class="text-base">
+                        <p><b>Author:</b> @detailNovel.Author</p>
+                        <p><b>Status:</b> @Utils.FormatNovelStatus(detailNovel.Status!.Value)</p>
+                    </div>
+
+                    <div class="!flex-1">
+                        <p class="font-semibold mb-1">Summary:</p>
+                        <p class="whitespace-pre-line text-sm leading-relaxed max-h-[140px] overflow-y-auto scrollbar-style">@detailNovel.Summary</p>
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <button class="btn-primary px-6 py-2" @onclick="StartRead">Start read</button>
+                        <button class="btn-second px-6 py-2" @onclick="ContinueRead">Read</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="!my-10 !border-[color:var(--bg-secondary)]">
+
+            <div class="flex flex-col gap-6">
+                @if (detailNovel.VolumnVsChapters?.Any() == true)
+                {
+                    @foreach (var vol in detailNovel.VolumnVsChapters)
+                    {
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                            @if (!string.IsNullOrEmpty(vol.Volumn?.ImageUrl))
+                            {
+                                <img src="@vol.Volumn.ImageUrl"
+                                        alt="@vol.Volumn.Name"
+                                     class="w-[200px] h-[250px] aspect-[2/3] object-cover rounded-xl border border-border-color" />
+                            }
+                            <div class="flex-1 min-w-0 w-full truncate">
+                                <div class="font-bold text-lg !py-2 !px-2 flex justify-between items-center" style="background-color: var(--bg-secondary)">
+                                    <h1 class="!m-0 truncate">@vol.Volumn?.Name</h1>
+                                    <button @onclick="() => ToggleVolumn(vol.Volumn?.Id!)" class="btn-icon">
+                                        @if (vol.IsExpanded == true || vol.IsExpanded == null)
+                                        {
+                                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293
+                                                                3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4
+                                                                4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414
+                                                                0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4
+                                                                4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        }
+                                    </button>
+                                </div>
+                                @if (vol.IsExpanded == true || vol.IsExpanded == null)
+                                {
+                                    <div class="flex-1 min-w-0 striped-rows overflow-x-auto !px-2">
+                                        @if (vol.Chapters?.Any() == true)
+                                        {
+                                            @foreach (var chapter in vol.Chapters)
+                                            {
+                                                <div class="flex items-center justify-between !py-3 gap-2">
+                                                    <div class="flex gap-2 flex-1 items-center truncate">
+                                                        @if (Utils.IsWithinLast7Days(chapter.UpdateDate))
+                                                        {
+                                                            <span class="text-red-400 text-sm font-semibold">New</span>
+                                                        }
+                                                        <a class="truncate text-base"
+                                                            @onclick="() => NavigateToChapter(chapter.Id)">
+                                                            @chapter.Name
+                                                        </a>
+                                                    </div>
+                                                    <p class="text-sm text-text-secondary whitespace-nowrap">@Utils.FormatDateTime(chapter.UpdateDate)</p>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="text-center py-8 text-gray-400">
+                                                <p>No chapters yet.</p>
+                                            </div>
+                                        }
+                                    </div>                                    
+                                }
+                            </div>
+                        </div>
+                        <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+                    }
+                }
+                else
+                {
+                    <p class="text-gray-400 text-center">No volumes or chapters available.</p>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter] private MainLayout? Layout { get; set; }
+    [Parameter] public string Id { get; set; } = string.Empty;
+    private DetailNovel? detailNovel;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnLoaddata(Id);
+        UiEventService.OnSelectNovelId -= HandleChangeId;
+        UiEventService.OnSelectNovelId += HandleChangeId;
+    }
+
+    async Task OnLoaddata(string _id)
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            var result = await NovelService.GetValueById(_id);
+            if (result != null && result.Success)
+            {
+                detailNovel = result.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    async void HandleChangeId(string id)
+    {
+        await OnLoaddata(id);
+    }
+
+    private void StartRead()
+    {
+        if (detailNovel?.VolumnVsChapters == null || !detailNovel.VolumnVsChapters.Any())
+        {
+            Layout?.ShowAlert("No chapters to read.", "info");
+            return;
+        }
+
+        var firstChapter = detailNovel.VolumnVsChapters
+            .SelectMany(v => v.Chapters ?? new List<Chapter>())
+            .OrderBy(c => c.Order)
+            .FirstOrDefault();
+
+        if (firstChapter != null)
+            Navigation.NavigateTo(Router.ChapterUrl.Replace("{id}", firstChapter.Id));
+    }
+
+    private void ContinueRead()
+    {
+        StartRead();
+    }
+
+    private void NavigateToChapter(string chapterId)
+    {
+        Navigation.NavigateTo(Router.ChapterUrl.Replace("{id}", chapterId));
+    }
+
+    private void ToggleVolumn(string volumnId)
+    {
+        var target = detailNovel?.VolumnVsChapters?.FirstOrDefault(v => v.Volumn?.Id == volumnId);
+        if (target != null)
+        {
+            target.IsExpanded = !(target.IsExpanded ?? true);
+        }
+    }
+    public void Dispose()
+    {
+        UiEventService.OnSelectNovelId -= HandleChangeId;
+    }
+}

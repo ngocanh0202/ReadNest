@@ -1,0 +1,24 @@
+﻿@using ReadNest_Models
+@using ReadNest_FE.Dictionaries
+@inject ReadNest_FE.Router.Router Router
+
+<div class="novel-card">
+    <div class="body">
+        <img src="@novel.ImageUrl" alt="@novel.Id" />
+        <div class="update">
+            <a class="btn-link" href="@(Router.ChapterUrl!.Replace("{id}", novel.ChapterId))">
+                @novel!.ChapterName
+            </a>
+            <p class="text-emerald-500/90">@novel!.VolumnName</p>
+        </div>
+    </div>
+    <div class="footer">
+        <a class="btn-link" href="@(Router.NovelUrl!.Replace("{id}", novel.Id))">
+            @novel.NovelName
+        </a>
+    </div>
+</div>
+
+@code {
+    [Parameter] public NovelResponese novel { get; set; } = new();
+}

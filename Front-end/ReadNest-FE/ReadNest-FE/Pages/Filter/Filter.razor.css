@@ -1,0 +1,163 @@
+﻿.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding-top: 80px;
+}
+
+.tool-search {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Name field with search button */
+.search-field-name {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.search-name-input {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.search-name-button {
+    flex: 0 0 auto;
+}
+
+    .search-name-button .btn-primary {
+        height: 100%;
+        min-height: 2.5rem;
+        padding: 0 1.5rem;
+        white-space: nowrap;
+    }
+
+/* Search row */
+.search-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.search-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+    .search-field label {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+.search-field-author {
+    flex: 2;
+}
+
+.search-field-status {
+    flex: 2;
+}
+
+.search-field-category {
+    flex: 0 0 auto;
+    min-width: 3rem;
+}
+
+.btn-category {
+    width: 100%;
+    height: 100%;
+    min-height: 2.5rem;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 0.25rem;
+}
+
+    .btn-category:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-category svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    .tool-search {
+        gap: 0.5rem;
+    }
+
+    .search-field-name {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-name-button .btn-primary {
+        width: 100%;
+        min-height: 2.75rem;
+    }
+
+    .search-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .search-field-author,
+    .search-field-status,
+    .search-field-category {
+        flex: 1;
+        width: 100%;
+    }
+
+    .search-field-category {
+        min-width: unset;
+    }
+
+    .btn-category {
+        min-height: 2.75rem;
+    }
+}
+
+/* Tablet responsive */
+@media (min-width: 641px) and (max-width: 768px) {
+    .search-field-name {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-name-button .btn-primary {
+        width: 100%;
+    }
+
+    .search-row {
+        flex-wrap: wrap;
+    }
+
+    .search-field-author {
+        flex: 1 1 100%;
+    }
+
+    .search-field-status {
+        flex: 1 1 calc(70% - 0.25rem);
+    }
+
+    .search-field-category {
+        flex: 0 0 calc(30% - 0.25rem);
+    }
+}
+
+/* Small desktop */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .search-name-button .btn-primary {
+        padding: 0 1rem;
+    }
+}

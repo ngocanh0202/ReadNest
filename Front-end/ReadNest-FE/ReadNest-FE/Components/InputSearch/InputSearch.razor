@@ -1,0 +1,180 @@
+﻿@inject ReadNest_FE.Interfaces.INovelService NovelService
+@inject ReadNest_FE.Router.Router Router
+@inject ReadNest_FE.Services.UiEventService UiEventService
+@inject NavigationManager Nav
+@using ReadNest_Models
+
+<div class="relative w-full max-w-[600px]">
+    <div class="relative flex items-center">
+        <input type="text"
+               placeholder="Search novels..."
+               class="search-input"
+               @bind="searchKeyword"
+               @bind:event="oninput"
+               @onkeyup="OnSearchKeyup" />
+
+        <svg class="absolute right-3.5 w-5 h-5 text-[var(--text-secondary)] pointer-events-none" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" />
+        </svg>
+
+        @if (!string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            <button class="absolute right-11 w-6 h-6 p-0 border-0 bg-transparent text-[var(--text-secondary)]
+                               hover:text-[var(--text-primary)] transition-colors cursor-pointer flex items-center justify-center"
+                    @onclick="CloseSearch">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" />
+                </svg>
+            </button>
+        }
+    </div>
+
+    @if (isSearching)
+    {
+        <div class="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--bg-primary)] border border-[var(--border-color)]
+                        rounded-xl shadow-lg max-h-[480px] overflow-y-auto z-[1000]
+                        flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-10 h-10 border-3 border-[var(--loading-stroke)] border-t-[var(--loading-stroke-active)]
+                            rounded-full animate-spin"></div>
+            <p class="text-[var(--text-secondary)] mt-2">Searching...</p>
+        </div>
+    }
+    else if (searchResults?.Any() == true)
+    {
+        <div class="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--bg-primary)] border border-[var(--border-color)]
+                        rounded-xl shadow-lg max-h-[480px] overflow-y-auto z-[1000]">
+            @foreach (var item in searchResults)
+            {
+                <div class="flex !gap-3 !p-3 cursor-pointer transition-colors border-b border-[var(--border-color)]
+                                    hover:bg-[var(--bg-secondary)] last:border-b-0"
+                     @onclick="() => OnSelectItem(item?.Id!)">
+                    <div class="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center">
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" alt="@item.NovelName" class="w-full h-full object-cover" />
+                        }
+                        else
+                        {
+                            <div class="w-full h-full flex items-center justify-center text-[var(--text-secondary)]">
+                                <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" />
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" />
+                                </svg>
+                            </div>
+                        }
+                    </div>
+                    <div class="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                        <h4 class="text-[15px] font-semibold text-[var(--text-primary)] m-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                            @item.NovelName
+                        </h4>
+                        <p class="text-[13px] text-[var(--text-secondary)] m-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                            @item.VolumnName
+                        </p>
+                        <p class="text-[13px] text-[var(--text-secondary)] m-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                            @item.ChapterName
+                        </p>
+                    </div>
+                </div>
+            }
+            <a class="btn-link !w-full text-center" @onclick="CloseSearch" href="@Router.FilterUrl">
+                Advanced Search
+            </a>
+        </div>
+
+    }
+    else if (!string.IsNullOrWhiteSpace(searchKeyword) && !isSearching)
+    {
+        <div class="absolute top-[calc(100%+8px)] left-0 right-0 bg-[var(--bg-primary)] border border-[var(--border-color)]
+                        rounded-xl shadow-lg max-h-[480px] overflow-y-auto z-[1000]
+                        flex flex-col items-center justify-center p-8 text-center">
+            <svg class="w-12 h-12 text-[var(--text-secondary)] mb-3" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" />
+            </svg>
+            <p class="text-[var(--text-secondary)] mt-0">No results found for "@searchKeyword"</p>
+            <a class="btn-link !w-full" @onclick="CloseSearch" href="@Router.FilterUrl">
+                Advanced Search
+            </a>
+        </div>
+
+    }
+</div>
+
+@code {
+    [CascadingParameter] private MainLayout? Layout { get; set; }
+    private string searchKeyword = string.Empty;
+    private List<NovelResponese>? searchResults;
+    private bool isSearching = false;
+    private bool hasMoreResults = false;
+    private int currentPage = 1;
+    private readonly int pageSize = 5;
+    private System.Threading.Timer? debounceTimer;
+
+    private void OnSearchKeyup(KeyboardEventArgs e)
+    {
+        debounceTimer?.Dispose();
+        debounceTimer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await PerformSearch();
+            });
+        }, null, 300, Timeout.Infinite);
+    }
+
+    private async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            searchResults = null;
+            hasMoreResults = false;
+            currentPage = 1;
+            StateHasChanged();
+            return;
+        }
+
+        isSearching = true;
+        StateHasChanged();
+
+        try
+        {
+            var results = await NovelService.GetValue(searchKeyword, currentPage, pageSize);
+
+            searchResults = results.Data?.Rows; 
+            hasMoreResults = results.Data?.PageNumber < results.Data?.TotalPages;
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message,"error");
+            searchResults = new List<NovelResponese>();
+            hasMoreResults = false;
+        }
+        finally
+        {
+            isSearching = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseSearch()
+    {
+        searchKeyword = string.Empty;
+        searchResults = null;
+        hasMoreResults = false;
+        currentPage = 1;
+        StateHasChanged();
+    }
+
+    private void OnSelectItem(string itemId)
+    {
+        Nav.NavigateTo(Router.NovelUrl.Replace("{id}", itemId));
+        CloseSearch();
+        UiEventService.SetSelectNovelId(itemId);
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Dispose();
+    }
+}

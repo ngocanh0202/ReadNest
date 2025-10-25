@@ -1,0 +1,51 @@
+name: Deploy Blazor WASM to GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'Front-end/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Publish
+        run: |
+          cd Front-end/ReadNest-FE
+          dotnet restore ReadNest-FE.sln
+          dotnet publish ReadNest-FE.sln -c Release -p:UseAppHost=false
+          PUBLISH_DIR=$(find . -path "*/bin/Release/*/publish/wwwroot" -type d | head -n 1)
+          echo "Publish dir: $PUBLISH_DIR"
+          cd ../..
+          mkdir -p ./_site
+          cp -r "Front-end/ReadNest-FE/$PUBLISH_DIR/"* ./_site/
+
+      - name: Add .nojekyll and 404.html
+        run: |
+          touch ./_site/.nojekyll
+          cp ./_site/index.html ./_site/404.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

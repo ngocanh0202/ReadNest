@@ -1,0 +1,201 @@
+﻿@inject IJSRuntime JS
+@inject ReadNest_FE.Interfaces.IGeminiService GeminiService;
+@inject ReadNest_FE.Interfaces.IPromptService PromptService;
+@using ReadNest_Models
+@using ReadNest_FE.Models
+@using ReadNest_FE.Components.ModalPrompt
+
+@if (IsPanelOpen)
+{
+    <div class="sliding-panel">
+        <div class="panel-content">
+            <div class="input-section">
+                <div class="flex justify-between items-center gap-2">
+                    <button class="btn-icon @(isShowInfor ? "actived" : "")" @onclick="ToggleShowInfor">
+                        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="35px" width="35px"><path d="M235.4 172.2c0-11.4 9.3-19.9 20.5-19.9 11.4 0 20.7 8.5 20.7 19.9s-9.3 20-20.7 20c-11.2 0-20.5-8.6-20.5-20zm1.4 35.7H275V352h-38.2V207.9z"></path><path d="M256 76c48.1 0 93.3 18.7 127.3 52.7S436 207.9 436 256s-18.7 93.3-52.7 127.3S304.1 436 256 436c-48.1 0-93.3-18.7-127.3-52.7S76 304.1 76 256s18.7-93.3 52.7-127.3S207.9 76 256 76m0-28C141.1 48 48 141.1 48 256s93.1 208 208 208 208-93.1 208-208S370.9 48 256 48z"></path></svg>
+                    </button>
+                    @if (isShowInfor)
+                    {
+                        <div class="showInforToken !p-2 flex flex-col gap-1 !bg-black/30 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm">
+                            <div class="text-sm font-medium">Prompt Token Count: @(translationResponse?.PromptTokenCount ?? 0)</div>
+                            <div class="text-sm font-medium">Candidates Token Count: @(translationResponse?.CandidatesTokenCount ?? 0)</div>
+                            <div class="text-sm font-medium">Total Token Count: @(translationResponse?.TotalTokenCount ?? 0)</div>
+                            <div class="text-sm font-medium">Model Version: @(translationResponse?.ModelVersion ?? "unknown")</div>
+                        </div>                       
+                    }
+                    <div class="flex justify-between items-center gap-2 button-group-mode-screen">
+                        <div @onclick="() => HandleChangeModeScreen(0)" class="btn-mode-screen @(modeScreen == 0 ? "active" : "")">Enter content</div>
+                        <div @onclick="() => HandleChangeModeScreen(1)" class="btn-mode-screen @(modeScreen == 1 ? "active" : "")">Edit result</div>
+                        <div @onclick="() => HandleChangeModeScreen(2)" class="btn-mode-screen @(modeScreen == 2 ? "active" : "")">Prompt</div>
+                    </div>
+                </div>
+                @if (modeScreen == 0)
+                {
+                    <textarea @bind="translationRequest!.Content"
+                        class="scrollbar-hide !h-full"
+                        placeholder="Enter the original text here..."
+                        rows="4"></textarea>                    
+                }
+                @if (modeScreen == 1)
+                {
+                    <textarea @bind="OutputContent"
+                        class="scrollbar-hide !h-full"
+                        placeholder="The AI-translated content will appear here..."
+                        rows="4"></textarea>       
+                }
+                @if(modeScreen == 2)
+                {
+                    <textarea @bind="translationRequest!.Prompt"
+                        class="scrollbar-hide !h-full"
+                        placeholder="Edit your translation prompt here..."
+                        rows="4"></textarea>    
+                }
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary flex-3 !p-[10px]" @onclick="SendMessage">Send</button>
+                <button class="btn-second flex-3 !p-[10px]" @onclick="HandleInsertContent">Insert</button>
+                <button class="btn-second flex-3 !p-[10px]" @onclick="() => ProcessPrompt(1, 5)">Prompt</button>
+                <button class="btn-second flex-1 !p-[10px]" @onclick="handleClose">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsPanelOpen { get; set; } = true;
+    [Parameter] public EventCallback<bool> IsPanelOpenChanged { get; set; }
+    [Parameter] public Func<string, Task>? OnInsertContent { get; set; }
+    [CascadingParameter] private LayoutForAuthor? Layout { get; set; }
+
+    int modeScreen = 0;
+    bool isShowInfor = false;
+    TranslationRequest? translationRequest;
+    TranslationResponse? translationResponse;   
+    private string OutputContent { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+        translationRequest = new TranslationRequest();
+    }
+
+    void ToggleShowInfor()
+    {
+        isShowInfor = !isShowInfor;
+    }
+
+    private async Task SendMessage()
+    {
+        try
+        {
+            Layout?.SetLoading(true);
+            if (string.IsNullOrWhiteSpace(translationRequest!.Content))
+            {
+                Layout?.ShowAlert("Text require", "warning");
+                return;
+            }
+
+            if (translationRequest!.Content.Length <= 100)
+            {
+                Layout?.ShowAlert("Content must be at least 100 characters.", "warning");
+                return;
+            }
+
+            var result = await GeminiService.translator(translationRequest);
+            if (result is null) return;
+
+            if (result.Success)
+            {
+                translationResponse = result.Data;
+                OutputContent = translationResponse!.P!;
+                HandleChangeModeScreen(1);
+            }
+        }
+        catch(Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message, "error");
+        }
+        finally
+        {
+            Layout?.SetLoading(false);
+        }
+    }
+
+    void HandleChangeModeScreen(int index)
+    {
+        modeScreen = index;
+    }
+
+    async Task handleClose()
+    {
+        await IsPanelOpenChanged.InvokeAsync();
+        IsPanelOpen = false;
+    }
+
+    private async Task ProcessPrompt(int pageNumber = 1, int pageSize = 5)
+    {
+        Response<PaginationData<List<Prompt>>> prompts = await PromptService.GetValue(string.Empty, pageNumber, pageSize);
+        if(prompts.Success)
+        if (prompts?.Data?.Rows != null && prompts.Data.Rows.Any())
+        {
+            Layout?.ShowModal("Select Prompt", 
+                @<ModalPrompt 
+                    Prompts="@prompts?.Data?.Rows"
+                    page="@pageNumber"
+                    pageSize="@pageSize"
+                    TotalPage="@prompts?.Data?.TotalPages"
+                    OnSetPrompt="@HandleSetPrompt"
+                >
+                </ModalPrompt>,
+                showCancel: true,
+                showOk: false
+            );
+        }
+        else
+        {
+            Layout?.ShowModal("No Prompts", 
+                @<div class="text-center p-4">
+                    <p class="text-gray-600">No prompts available. Please create some prompts first.</p>
+                </div>
+            ,
+                showCancel: false,
+                showOk: false
+            );
+        }
+    }
+
+    void HandleSetPrompt(string p)
+    {
+        translationRequest!.Prompt = p;
+        StateHasChanged();
+        HandleChangeModeScreen(2);
+    }
+
+
+    async Task HandleInsertContent()
+    {
+        if (string.IsNullOrEmpty(OutputContent))
+        {
+            Layout?.ShowAlert("Content is required", "warning");
+            return;
+        }
+
+        if (OutputContent.Length <= 100)
+        {
+            Layout?.ShowAlert("Content must be at least 100 characters.", "warning");
+            return;
+        }
+
+        if (OnInsertContent is not null)
+        {
+            await OnInsertContent.Invoke(OutputContent);
+            await handleClose();
+        }
+
+    }
+
+    private async Task CopyOutput()
+    {
+        await JS.InvokeVoidAsync("reader.CopyToclipboard", OutputContent);
+    }
+}

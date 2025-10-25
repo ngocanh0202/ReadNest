@@ -1,0 +1,17 @@
+﻿@if (Messages.Any())
+{
+    <div class="alert-container fixed top-4 right-4 flex flex-col gap-2" style="z-index:99999">
+        @foreach (var alert in Messages)
+        {
+            <div class="alert @alert.Type show">
+                <span>@alert.Message</span>
+                <span class="close-btn" @onclick="() => OnClose.InvokeAsync(alert.Id)">✕</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<AlertMessageItem> Messages { get; set; } = new();
+    [Parameter] public EventCallback<Guid> OnClose { get; set; }
+}

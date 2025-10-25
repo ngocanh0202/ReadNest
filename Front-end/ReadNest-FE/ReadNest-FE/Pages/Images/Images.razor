@@ -1,0 +1,83 @@
+﻿@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject ReadNest_FE.Interfaces.IImageService ImageService
+@using ReadNest_Models
+@using ReadNest_FE.Components.CardNovel
+@using ReadNest_FE.Dictionaries
+@page "/images"
+
+<PageTitle>List of images</PageTitle>
+
+<div class="container !px-2 !pb-[2rem]">
+    @if (images.Any())
+    {
+        foreach (var n in images)
+        {
+            <img src="@n.ImageUrl" alt="@n.Id" />
+        }
+    }
+    <div class="!mb-[10px] !flex flex-col !justify-between !items-center">
+        @if (Page != TotalPage)
+        {
+            <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+            <button class="btn-second !w-[200px]"
+                    disabled="@IsLoading"
+                    @onclick:stopPropagation="true"
+                    @onclick="() => HandleLoadNovel(Page, PageSize)">
+                @if (IsLoading)
+                {
+                    <span class="loader"></span>
+                }
+                else
+                {
+                    <text>Load more</text>
+                }
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] MainLayout? mainLayout { get; set; }
+    Response<PaginationData<List<Image>>>? response { get; set; }
+    List<Image> images { get; set; } = new();
+    bool IsLoading = false;
+    int Page = 1;
+    int PageSize = 5;
+    int TotalPage = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            response = await ImageService.GetValue(string.Empty, Page, PageSize);
+            if (response is null) return; 
+            if (response.Success)
+            {
+                images = response!.Data!.Rows;
+                TotalPage = response!.Data.TotalPages;
+            }
+        }
+        catch (Exception ex)
+        {
+            mainLayout?.ShowAlert(ex.Message, "error");
+        }
+    }
+
+    private async Task HandleLoadNovel(int page, int pageSize)
+    {
+        IsLoading = true;
+        Page = page + 1;
+        var result = await ImageService.GetValue(string.Empty, Page, PageSize);
+        if (result.Success)
+        {
+            TotalPage = result.Data!.TotalPages;
+            if (result!.Data!.Rows.Any())
+                images?.AddRange(result!.Data!.Rows);
+        }
+        else
+        {
+            mainLayout?.ShowAlert(result.Message, "error");
+        }
+        IsLoading = false;
+    }
+}

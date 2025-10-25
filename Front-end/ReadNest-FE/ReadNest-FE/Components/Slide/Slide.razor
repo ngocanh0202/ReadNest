@@ -1,0 +1,111 @@
+﻿@inject ReadNest_FE.Router.Router Router
+@using ReadNest_Models
+<div class="slider-container">
+    <div class="slider-wrapper" @onmouseenter="PauseAutoPlay" @onmouseleave="ResumeAutoPlay">
+        <div class="slides">
+            @if (slides is not null)
+            {
+                @for (int i = 0; i < slides.Count; i++)
+                {
+                    var index = i;
+                    var slide = slides[i];
+                    <div class="slide @(currentSlide == index ? "active" : "")">
+                        <img src="@slide.ImageUrl" alt="@slide.Id" />
+                        @if (!string.IsNullOrEmpty(slide.Name))
+                        {
+                            <div class="slide-content">
+                                <a class="!line-clamp-5 break-all" href="@(Router.NovelUrl!.Replace("{id}", slide.Id))">@slide.Name</a>
+                                @if (!string.IsNullOrEmpty(slide.Summary))
+                                {
+                                    <p class="max-h-[100px] overflow-y-auto scrollbar-style">@slide.Summary</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                }                
+            }
+        </div>
+
+        <button class="nav-button prev" @onclick="GoToPrevious" aria-label="Previous slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+
+        <button class="nav-button next" @onclick="GoToNext" aria-label="Next slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
+
+        <div class="bullets">
+            @if(slides is not null)
+                @for (int i = 0; i < slides.Count; i++)
+                {
+                    var index = i;
+                    <button class="bullet @(currentSlide == index ? "active" : "")"
+                            @onclick="() => GoToSlide(index)"
+                            aria-label="Go to slide @(index + 1)">
+                    </button>
+                }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<OverviewNovel>? slides { get; set; }
+
+    private int currentSlide = 0;
+    private bool isAutoPlaying = true;
+    private System.Threading.Timer? timer;
+
+    protected override void OnInitialized()
+    {
+        StartAutoPlay();
+    }
+
+    private void StartAutoPlay()
+    {
+        timer = new System.Threading.Timer(async _ =>
+        {
+            if (isAutoPlaying)
+            {
+                await InvokeAsync(() =>
+                {
+                    GoToNext();
+                    StateHasChanged();
+                });
+            }
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private void GoToSlide(int index)
+    {
+        currentSlide = index;
+    }
+
+    private void GoToPrevious()
+    {
+        currentSlide = currentSlide == 0 ? slides!.Count - 1 : currentSlide - 1;
+    }
+
+    private void GoToNext()
+    {
+        currentSlide = currentSlide == slides!.Count - 1 ? 0 : currentSlide + 1;
+    }
+
+    private void PauseAutoPlay()
+    {
+        isAutoPlaying = false;
+    }
+
+    private void ResumeAutoPlay()
+    {
+        isAutoPlaying = true;
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+}

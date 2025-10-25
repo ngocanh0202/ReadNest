@@ -1,0 +1,25 @@
+﻿<div class="toggle-mode-switch">
+    <input type="checkbox"
+           class="toggle-mode-input"
+           checked="@isChecked"
+           @onchange="OnToggleChanged" />    
+
+    <div class="toggle-mode-label">
+        <span><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M352 96c0-53.02-42.98-96-96-96s-96 42.98-96 96 42.98 96 96 96 96-42.98 96-96zM233.59 241.1c-59.33-36.32-155.43-46.3-203.79-49.05C13.55 191.13 0 203.51 0 219.14v222.8c0 14.33 11.59 26.28 26.49 27.05 43.66 2.29 131.99 10.68 193.04 41.43 9.37 4.72 20.48-1.71 20.48-11.87V252.56c-.01-4.67-2.32-8.95-6.42-11.46zm248.61-49.05c-48.35 2.74-144.46 12.73-203.78 49.05-4.1 2.51-6.41 6.96-6.41 11.63v245.79c0 10.19 11.14 16.63 20.54 11.9 61.04-30.72 149.32-39.11 192.97-41.4 14.9-.78 26.49-12.73 26.49-27.06V219.14c-.01-15.63-13.56-28.01-29.81-27.09z"></path></svg></span>
+        <span class="toggle-icon"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12 14V22H4C4 17.5817 7.58172 14 12 14ZM12 13C8.685 13 6 10.315 6 7C6 3.685 8.685 1 12 1C15.315 1 18 3.685 18 7C18 10.315 15.315 13 12 13ZM21 17H22V22H14V17H15V16C15 14.3431 16.3431 13 18 13C19.6569 13 21 14.3431 21 16V17ZM19 17V16C19 15.4477 18.5523 15 18 15C17.4477 15 17 15.4477 17 16V17H19Z"></path></svg></span>
+    </div>
+    <div class="toggle-mode-bg"></div>
+</div>
+
+@code {
+    [Parameter] public bool isChecked { get; set; } = true;
+    [Parameter] public EventCallback<bool> isCheckedChanged { get; set; }
+    [Parameter] public EventCallback<bool> onCheckedChanged { get; set; }
+
+    private async Task OnToggleChanged(ChangeEventArgs e)
+    {
+        isChecked = (bool)e.Value!;
+        await isCheckedChanged.InvokeAsync(isChecked);
+        await onCheckedChanged.InvokeAsync(isChecked);
+    }
+}

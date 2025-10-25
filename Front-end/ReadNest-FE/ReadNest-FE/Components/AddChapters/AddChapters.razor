@@ -1,0 +1,433 @@
+﻿@using ReadNest_FE.Models
+@using ReadNest_Models
+@using System.Text.Json
+@inject ReadNest_FE.Interfaces.IImageService ImageService
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject ReadNest_FE.Router.Router Router
+
+<div class="chapter">
+    <div class="flex">
+        <button class="btn-second !border-2 !border-dashed" @onclick="AddNewHeader">Add new volumn</button>
+    </div>
+    <div class="!mt-3">
+        @if (volumnVsChapters is not null)
+            @foreach (var volumnVsChapter in volumnVsChapters)
+            {
+                <div class="border-2 border-white rounded-2xl p-5">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+                        <input type="text"
+                               id="@($"input-volumn-{volumnVsChapter.Volumn!.Id}")"
+                               @bind="volumnVsChapter.Volumn!.Name"
+                               placeholder="Enter Volume Name"
+                               class="input flex-1 w-full sm:w-auto" />
+
+                        <div class="flex gap-2 w-full sm:w-auto justify-end">
+                            <span class="text-red-600">*</span>
+                            <button @onclick="() => ToggleVolumn(volumnVsChapter.Volumn.Id)"
+                                    class="btn-icon">
+                                @if (volumnVsChapter.IsExpanded == true || volumnVsChapter.IsExpanded == null)
+                                {
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                }
+                            </button>
+
+                            <button @onclick="() => HandleDeleteVolumn(volumnVsChapter.Volumn.Id)"
+                                    class="btn-icon">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="validation-message text-red-600 text-sm mt-1" for="@($"input-volumn-{volumnVsChapter.Volumn!.Id}")"></p>
+                    @if (volumnVsChapter.IsExpanded == true || volumnVsChapter.IsExpanded == null)
+                    {
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 pl-0 sm:pl-2 !mt-3">
+                            <input type="text"
+                                   @bind="newChapterNames[volumnVsChapter.Volumn.Id]"
+                                   placeholder="Enter chapter name"
+                                   class="input flex-1 w-full sm:w-auto" />
+
+                            <button @onclick="() => AddChapter(volumnVsChapter.Volumn.Id)"
+                                    class="btn-icon w-full sm:w-auto">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="flex flex-col lg:flex-row gap-4 !mt-3">
+                            <div class="w-full lg:w-[200px] flex-shrink-0">
+                                <div @onclick="() => TriggerImageUpload(volumnVsChapter.Volumn.Id)"
+                                     class="post-image w-full aspect-[2/3] rounded-lg flex items-center justify-center bg-gray-100 cursor-pointer"
+                                     style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                                    @if (string.IsNullOrEmpty(volumnVsChapter.Volumn.ImageUrl))
+                                    {
+                                        <span class="text-text-secondary text-lg">Upload Image volumn</span>
+                                    }
+                                    else
+                                    {
+                                        <img src="@volumnVsChapter.Volumn.ImageUrl" alt="Volume" class="!w-full !h-full object-cover rounded-lg" />
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(volumnVsChapter.Volumn.ImageUrl))
+                                {
+                                    <button @onclick="() => RemoveImage(volumnVsChapter.Volumn.Id)"
+                                            @onclick:stopPropagation="true"
+                                            class="mt-2 text-sm text-red-500 hover:text-red-700 w-full">
+                                        Remove Image
+                                    </button>
+                                }
+                            </div>
+
+                            <div class="flex-1 min-w-0 striped-rows overflow-x-auto w-0">
+                                @if (volumnVsChapter.Chapters?.Any() == true)
+                                {
+                                    @foreach (var chapter in volumnVsChapter.Chapters)
+                                    {
+                                        <div class="flex items-center justify-between !py-3 !gap-2">
+                                            <a class="truncate block flex-1 max-w-[calc(100%-120px)]" @onclick="() => HandleNavigationToPostChapter(chapter.Id)">
+                                                @chapter.Name
+                                            </a>
+
+                                            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                                <button @onclick="() => MoveChapterUp(volumnVsChapter.Volumn.Id, chapter.Id)"
+                                                        class="p-1 hover:bg-white/10 rounded transition-colors">
+                                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+
+                                                <button @onclick="() => MoveChapterDown(volumnVsChapter.Volumn.Id, chapter.Id)"
+                                                        class="p-1 hover:bg-white/10 rounded transition-colors">
+                                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+
+                                                <button @onclick="() => HandleDeleteChapter(volumnVsChapter.Volumn.Id, chapter.Id)"
+                                                        class="p-1 hover:bg-red-500/10 rounded transition-colors">
+                                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="text-center py-8 text-gray-400">
+                                        <p>No chapters yet. Add your first chapter above.</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+                <InputFile @key="volumnVsChapter.Volumn.Id"
+                           id="@($"fileInput-{volumnVsChapter.Volumn!.Id}")"
+                           OnChange="@(e => HandleImageUpload(e, volumnVsChapter.Volumn.Id))"
+                           style="display: none;"
+                           accept="image/*" />
+            }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] private MainLayout? Layout { get; set; }
+
+    [Parameter]
+    public List<VolumnVsChapters>? volumnVsChapters { get; set; }
+
+    [Parameter]
+    public EventCallback<List<VolumnVsChapters>?> volumnVsChaptersChanged { get; set; }
+
+    [Parameter]
+    public string? novelId { get; set; }
+
+    private int volumnOrderCounter = 1;
+    private int chapterOrderCounter = 1;
+    private Dictionary<string, string> newChapterNames = new();
+
+    protected override void OnParametersSet()
+    {
+        volumnVsChapters ??= new List<VolumnVsChapters>();
+
+        if (volumnVsChapters.Any())
+        {
+            volumnOrderCounter = volumnVsChapters.Max(v => v.Volumn?.Order ?? 0) + 1;
+
+            var allChapters = volumnVsChapters
+                .Where(v => v.Chapters != null)
+                .SelectMany(v => v.Chapters!)
+                .ToList();
+
+            if (allChapters.Any())
+            {
+                chapterOrderCounter = allChapters.Max(c => c.Order ?? 0) + 1;
+            }
+
+            foreach (var vvc in volumnVsChapters)
+            {
+                if (vvc.Volumn?.Id != null && !newChapterNames.ContainsKey(vvc.Volumn.Id))
+                {
+                    newChapterNames[vvc.Volumn.Id] = string.Empty;
+                }
+            }
+        }
+    }
+
+    private async Task NotifyChanged()
+    {
+        if (volumnVsChaptersChanged.HasDelegate)
+        {
+            await volumnVsChaptersChanged.InvokeAsync(volumnVsChapters);
+        }
+    }
+
+    private async Task AddNewHeader()
+    {
+        volumnVsChapters ??= new List<VolumnVsChapters>();
+
+        var newVolumnId = Guid.NewGuid().ToString();
+        volumnVsChapters.Add(new VolumnVsChapters
+        {
+            Volumn = new Volumn()
+            {
+                Id = newVolumnId,
+                Name = $"Vol {volumnOrderCounter}",
+                Order = volumnOrderCounter++,
+                NovelId = novelId
+            },
+            Chapters = new List<Chapter>(),
+            IsExpanded = true
+        });
+        newChapterNames[newVolumnId] = string.Empty;
+
+        await NotifyChanged();
+    }
+
+    private void ToggleVolumn(string volumnId)
+    {
+        var volumn = volumnVsChapters?.FirstOrDefault(h => h.Volumn?.Id == volumnId);
+        if (volumn != null)
+        {
+            volumn.IsExpanded = volumn.IsExpanded == true ||  volumn.IsExpanded == null ? false : true;
+        }
+    }
+
+    private async Task AddChapter(string volumnId)
+    {
+        var volumnVsChapter = volumnVsChapters?.FirstOrDefault(h => h.Volumn?.Id == volumnId);
+        if (volumnVsChapter != null &&
+            !string.IsNullOrWhiteSpace(newChapterNames.GetValueOrDefault(volumnId)))
+        {
+            volumnVsChapter.Chapters ??= new List<Chapter>();
+            volumnVsChapter.Chapters.Add(new Chapter
+            {
+                Id = Guid.NewGuid().ToString(),
+                Order = chapterOrderCounter++,
+                Name = newChapterNames[volumnId],
+                VolumnId = volumnId
+            });
+            newChapterNames[volumnId] = string.Empty;
+            await NotifyChanged();
+        }
+    }
+
+    private async Task DeleteVolumn(string volumnId)
+    {
+        volumnVsChapters?.RemoveAll(v => v.Volumn?.Id == volumnId);
+        newChapterNames.Remove(volumnId);
+        await NotifyChanged();
+    }
+
+    private async Task DeleteChapter(string volumnId, string chapterId)
+    {
+        var volumn = volumnVsChapters?.FirstOrDefault(v => v.Volumn?.Id == volumnId);
+        volumn?.Chapters?.RemoveAll(c => c.Id == chapterId);
+        await NotifyChanged();
+    }
+
+    private async Task HandleDeleteVolumn(string volumnId)
+    {
+        var volumn = volumnVsChapters?.FirstOrDefault(v => v.Volumn?.Id == volumnId);
+    
+        if (volumn?.Volumn?.CreateBy != null)
+        {
+            ShowModalToConfirmDelete(true, volumnId);
+        }
+        else
+        {
+            await DeleteVolumn(volumnId);
+        }
+    }
+
+    private async Task HandleDeleteChapter(string volumnId, string chapterId)
+    {
+        var volumn = volumnVsChapters?.FirstOrDefault(v => v.Volumn?.Id == volumnId);
+        var chapter = volumn?.Chapters?.FirstOrDefault(c => c.Id == chapterId);
+    
+        if (chapter?.CreateBy != null)
+        {
+            ShowModalToConfirmDelete(false, volumnId, chapterId);
+        }
+        else
+        {
+            await DeleteChapter(volumnId, chapterId);
+        }
+    }
+
+    private void ShowModalToConfirmDelete(bool isVolumn, string volumnId, string? chapterId = null)
+    {
+        var itemType = isVolumn ? "Volume" : "Chapter";
+        var message = $"Are you sure you want to delete this {itemType}?";
+    
+        Layout?.ShowModal(
+            message,
+            @<div></div>,
+            EventCallback.Factory.Create(this, async () =>
+            {
+                if (isVolumn)
+                {
+                    await DeleteVolumn(volumnId);
+                }
+                else if (chapterId != null)
+                {
+                    await DeleteChapter(volumnId, chapterId);
+                }
+            })
+        );
+    }
+
+    private async Task MoveChapterUp(string volumnId, string chapterId)
+    {
+        var volumnVsChapter = volumnVsChapters?.FirstOrDefault(h => h.Volumn?.Id == volumnId);
+        if (volumnVsChapter?.Chapters != null)
+        {
+            var index = volumnVsChapter.Chapters.FindIndex(c => c.Id == chapterId);
+            if (index > 0)
+            {
+                var temp = volumnVsChapter.Chapters[index];
+                volumnVsChapter.Chapters[index] = volumnVsChapter.Chapters[index - 1];
+                volumnVsChapter.Chapters[index - 1] = temp;
+
+                volumnVsChapter.Chapters[index].Order = index + 1;
+                volumnVsChapter.Chapters[index - 1].Order = index;
+                await NotifyChanged();
+            }
+        }
+    }
+
+    private async Task MoveChapterDown(string volumnId, string chapterId)
+    {
+        var volumnVsChapter = volumnVsChapters?.FirstOrDefault(h => h.Volumn?.Id == volumnId);
+        if (volumnVsChapter?.Chapters != null)
+        {
+            var index = volumnVsChapter.Chapters.FindIndex(c => c.Id == chapterId);
+            if (index >= 0 && index < volumnVsChapter.Chapters.Count - 1)
+            {
+                var temp = volumnVsChapter.Chapters[index];
+                volumnVsChapter.Chapters[index] = volumnVsChapter.Chapters[index + 1];
+                volumnVsChapter.Chapters[index + 1] = temp;
+
+                volumnVsChapter.Chapters[index].Order = index + 1;
+                volumnVsChapter.Chapters[index + 1].Order = index + 2;
+                await NotifyChanged();
+            }
+        }
+    }
+
+    private async Task TriggerImageUpload(string volumnId)
+    {
+        await JS.InvokeVoidAsync("eval", $"document.getElementById('fileInput-{volumnId}').click()");
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e, string volumnId)
+    {
+        var volumnVsChapter = volumnVsChapters?.FirstOrDefault(h => h.Volumn?.Id == volumnId);
+        if (volumnVsChapter?.Volumn == null) return;
+
+        IBrowserFile? selectedFile = e.File;
+        if (selectedFile == null) return;
+
+        if (selectedFile.Size > 5 * 1024 * 1024)
+        {
+            Layout?.ShowAlert("Image size must not exceed 5MB", "error");
+            return;
+        }
+
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+        if (!allowedTypes.Contains(selectedFile.ContentType.ToLower()))
+        {
+            Layout?.ShowAlert("Only JPEG, PNG, and WebP images are allowed", "error");
+            return;
+        }
+
+        try
+        {
+            var buffer = new byte[selectedFile.Size];
+            using (var readStream = selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024))
+            {
+                await readStream.ReadAsync(buffer, 0, (int)selectedFile.Size);
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+            await File.WriteAllBytesAsync(tempFilePath, buffer);
+
+            using var fileStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read);
+            var response = await ImageService.PostSingle(fileStream, selectedFile.ContentType);
+            File.Delete(tempFilePath);
+            if (response is null) return;
+
+            if (response.Success && response.Data != null)
+            {
+                volumnVsChapter.Volumn.ImageUrl = response.Data.ImageUrl;
+                volumnVsChapter.Volumn.ImageId = response.Data.Id;
+                await NotifyChanged();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert($"Error uploading image: {ex.Message}", "error");
+        }
+    }
+
+    private async Task RemoveImage(string volumnId)
+    {
+        var volumnVsChapter = volumnVsChapters?.FirstOrDefault(h => h.Volumn?.Id == volumnId);
+        if (volumnVsChapter?.Volumn != null)
+        {
+            volumnVsChapter.Volumn.ImageUrl = null;
+            volumnVsChapter.Volumn.ImageId = null;
+            await NotifyChanged();
+            StateHasChanged();
+        }
+    }
+
+    private void HandleNavigationToPostChapter(string chapterId)
+    {
+        var chapter = volumnVsChapters?
+            .SelectMany(c => c.Chapters ?? new List<Chapter>())
+            .FirstOrDefault(c => c.Id == chapterId);
+
+        if (chapter != null && string.IsNullOrEmpty(chapter.CreateBy))
+        {
+            Layout?.ShowAlert("Not have chapter yet, please update or add new chapter", "warning");
+            return;
+        }
+        Navigation.NavigateTo(Router.ChapterUrl.Replace("{id}", chapterId));
+    }
+}

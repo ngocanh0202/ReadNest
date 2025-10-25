@@ -1,0 +1,5 @@
+﻿@config "../tailwind.config.js";
+@import "tailwindcss";
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+@import "./quill.snow.css";

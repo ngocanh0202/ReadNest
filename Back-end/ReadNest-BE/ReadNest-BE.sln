@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36518.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadNest-BE", "ReadNest-BE\ReadNest-BE.csproj", "{D845286D-A92F-4B4C-A9C9-E327909F9DFE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadNest-Model", "ReadNest-Model\ReadNest-Model.csproj", "{65895F4C-74C0-442B-84CC-C1206781770D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D845286D-A92F-4B4C-A9C9-E327909F9DFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D845286D-A92F-4B4C-A9C9-E327909F9DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D845286D-A92F-4B4C-A9C9-E327909F9DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D845286D-A92F-4B4C-A9C9-E327909F9DFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65895F4C-74C0-442B-84CC-C1206781770D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65895F4C-74C0-442B-84CC-C1206781770D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65895F4C-74C0-442B-84CC-C1206781770D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65895F4C-74C0-442B-84CC-C1206781770D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {46AFFA9E-B193-4D74-9E43-C32A34E177C5}
+	EndGlobalSection
+EndGlobal

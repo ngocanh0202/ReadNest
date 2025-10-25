@@ -1,0 +1,50 @@
+﻿@page "/test"
+@using ReadNest_FE.Components.Editor
+@using ReadNest_FE.Components.ToggleModeSwitch
+
+
+<div class="!mt-[80px]"></div>
+
+<ToggleModeSwitch @bind-isChecked="isChecked"></ToggleModeSwitch>
+<div class="mt-4 text-center">
+    <p>Current value: @isChecked</p>
+</div>
+
+
+<div class="table-content">
+    <div class="table-title">Table content</div>
+
+    <div class="volume-block">
+        <div class="volume-header">Volumn Name</div>
+        <div class="chapter-list">
+            <div class="chapter-item">Chapter 1</div>
+            <div class="chapter-item">Chapter 2</div>
+            <div class="chapter-item">Chapter 3</div>
+        </div>
+    </div>
+
+    <div class="volume-block">
+        <div class="volume-header">Volumn Name</div>
+        <div class="chapter-list">
+            <div class="chapter-item">Chapter 1</div>
+            <div class="chapter-item">Chapter 2</div>
+            <div class="chapter-item">Chapter 3</div>
+        </div>
+    </div>
+</div>
+
+<div class="font-size-xl">
+    <div>
+        <Editor @bind-content="Content"></Editor>
+    </div>
+</div>
+
+<div>
+    <div>@Content</div>
+</div>
+
+
+@code {
+    private string? Content;
+    private bool isChecked = false;
+}

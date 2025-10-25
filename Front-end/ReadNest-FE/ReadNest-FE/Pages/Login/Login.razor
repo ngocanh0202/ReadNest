@@ -1,0 +1,253 @@
+﻿@page "/login"
+@layout LayoutWithoutNav
+@using ReadNest_Models
+@using ReadNest_FE.Dictionaries
+@using ReadNest_FE.Models
+@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject NavigationManager Navigation
+@inject ReadNest_FE.Interfaces.IAuthService AuthService
+@inject IJSRuntime JS
+
+<PageTitle>Login - ReadNest</PageTitle>
+
+<div class="fixed inset-0 flex flex-col items-center justify-center p-[5px]">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-2 items-center w-full max-w-md px-4">
+        <div class="flex flex-col items-center text-center">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+            </div>
+            <h1>Welcome to ReadNest</h1>
+            <p>Sign in to access your reading sanctuary</p>
+        </div>
+
+        <div class="card w-full">
+            <EditForm Model="@user" OnValidSubmit="@OnLogin">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label for="username" class="!inline">Username</label>
+                    <span class="text-red-600">*</span>
+                    <div>
+                        <div class="input-wrapper">
+                            <div class="input-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <InputText id="input-username"
+                                       class="input"
+                                       placeholder="Enter your username"
+                                       @bind-Value="user.UserName"
+                                       disabled="@isLoadingLogin"
+                                       autocomplete="off" />
+                        </div>
+                        <p class="validation-message" for="input-username"></p>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="!inline">Password</label>
+                    <span class="text-red-600">*</span>
+                    <div>
+                        <div class="input-wrapper">
+                            <div class="input-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                            <InputText id="input-password"
+                                       type="password"
+                                       class="input"
+                                       placeholder="Enter your password"
+                                       @bind-Value="user.Password"
+                                       disabled="@isLoadingLogin"
+                                       autocomplete="off" />
+                        </div>
+                        <p class="validation-message" for="input-password"></p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="IP" class="!inline">Server Host</label>
+                    <span class="text-red-600">*</span>
+                    <div class="flex gap-2">
+                        <button type="button" tabindex="-1" class="btn-second !p-0 !w-[65px] !text-sm" @onclick="OnOpenSelectScheme" disabled="@isLoadingLogin">
+                            @scheme.ToUpper()
+                        </button>
+                        <div class="w-full">
+                            <div class="input-wrapper flex-1">
+                                <div class="input-icon lg">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                                    </svg>
+                                </div>
+                                <InputText id="input-host"
+                                           class="input"
+                                           placeholder="e.g., localhost:5000"
+                                           @bind-Value="host"
+                                           disabled="@isLoadingLogin"
+                                           autocomplete="off" />
+                            </div>
+                            <p class="validation-message" for="input-host"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        disabled="@isLoadingLogin"
+                        class="btn-primary @(isLoadingLogin ? "disabled" : "")">
+                    Sign In
+                </button>
+            </EditForm>
+        </div>
+
+        <div class="mt-2 text-center">
+            <p>
+                Don't have an account?
+                <a href="#" class="font-bold">Sign up</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [CascadingParameter] private LayoutWithoutNav? Layout { get; set; }
+
+    private string scheme = "https";
+    private string? host;
+    private UserLogin user = new();
+    private bool isLoadingLogin;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        host = Store?.Host?
+          .Replace("https://", "")
+          .Replace("http://", "");
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var rulesUsername = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Username is required." },
+                new() { Rule = "value.length < 3", Message = "Username must be at least 3 characters." },
+                new() { Rule = "!/^[a-zA-Z0-9_]+$/.test(value)", Message = "Invalid format." }
+            };
+            var rulesPassword = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Password is required." },
+            };
+            var rulesHost = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Host is required." },
+            };
+
+            await JS.InvokeVoidAsync("setDynamicRules", "input-username", rulesUsername);
+            await JS.InvokeVoidAsync("setDynamicRules", "input-password", rulesPassword);
+            await JS.InvokeVoidAsync("setDynamicRules", "input-host", rulesHost);
+        }
+    }
+
+    protected override bool ShouldRender()
+    {
+        if (!string.IsNullOrEmpty(Store.Token))
+        {
+            Navigation.NavigateTo(Router.HomeUrl!);
+            return false;
+        }
+        return base.ShouldRender();
+    }
+
+    private void OnOpenSelectScheme()
+    {
+        Layout?.ShowModal("Select protocol",
+            @<div class="flex justify-center gap-4 mt-4">
+                <button class="btn-second px-6 py-3 rounded-md border border-[var(--border-color)]
+                   bg-[var(--bg-secondary)] text-[var(--text-primary)]
+                   cursor-pointer transition-all duration-200 ease-in-out
+                   hover:bg-[var(--btn-primary-bg)] hover:text-white hover:-translate-y-[2px]
+                   data-[selected=true]:border-2 data-[selected=true]:border-[var(--btn-primary-bg)]
+                   data-[selected=true]:font-semibold data-[selected=true]:-translate-y-[2px]
+                   data-[selected=true]:pointer-events-none" 
+                   data-selected="@(scheme == "http" ? "true" : "false")" 
+                   @onclick="@(() => OnSelectScheme("http"))">
+                    HTTP
+                </button>
+                <button class="btn-second px-6 py-3 rounded-md border border-[var(--border-color)]
+                       bg-[var(--bg-secondary)] text-[var(--text-primary)]
+                       cursor-pointer transition-all duration-200 ease-in-out
+                       hover:bg-[var(--btn-primary-bg)] hover:text-white hover:-translate-y-[2px]
+                       data-[selected=true]:border-2 data-[selected=true]:border-[var(--btn-primary-bg)]
+                       data-[selected=true]:font-semibold data-[selected=true]:-translate-y-[2px]
+                       data-[selected=true]:pointer-events-none"
+                       data-selected="@(scheme == "https" ? "true" : "false")"
+                       @onclick="@(() => OnSelectScheme("https"))">
+                    HTTPS
+                </button>
+            </div>
+    ,
+            showCancel: false,
+            showOk: false );
+    }
+
+    private void OnSelectScheme(string newScheme)
+    {
+        scheme = newScheme;
+        Layout?.CloseModal();
+    } 
+
+    private async Task<bool> ValidateInputs()
+    {
+        bool isValidUser = await JS.InvokeAsync<bool>("checkDynamicRules", "input-username", user.UserName ?? string.Empty);
+        bool isValidPassword = await JS.InvokeAsync<bool>("checkDynamicRules", "input-password", user.Password ?? string.Empty);
+        bool isValidHost = await JS.InvokeAsync<bool>("checkDynamicRules", "input-host", host ?? string.Empty);
+
+        return isValidUser && isValidPassword && isValidHost;
+    }
+
+    private async Task OnLogin()
+    {
+        if (!await ValidateInputs()) return;
+
+        isLoadingLogin = true;
+
+        try
+        {
+            Store.Host = $"{scheme}://{host}";
+            var result = await AuthService.Login(user);
+            if (result is null) return;
+            if (result.Success)
+            {
+                Store.Token = result.Data!.Token;
+                Store.RefreshToken = result.Data!.RefreshToken;
+                Store.UserName = user.UserName;
+                Store.HasContributePermission = result.Data.HasContributePermission;
+
+                await JS.InvokeVoidAsync("localStorage.setItem", "authToken", Store.Token);
+                await JS.InvokeVoidAsync("localStorage.setItem", "userName", Store.UserName);
+                await JS.InvokeVoidAsync("localStorage.setItem", "host", Store.Host);
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "HasContributePermission", Store.HasContributePermission);
+                await Task.Delay(1000);
+                Navigation.NavigateTo(Router.HomeUrl!);
+            }
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert($"❌ Login failed: {ex.Message}", "error");
+        }
+        finally
+        {
+            isLoadingLogin = false;
+        }
+    }
+}

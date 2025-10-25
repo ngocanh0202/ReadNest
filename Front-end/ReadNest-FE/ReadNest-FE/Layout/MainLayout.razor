@@ -1,0 +1,141 @@
+﻿@using ReadNest_FE.Components.Alert
+@using ReadNest_FE.Components.Loading
+@using ReadNest_FE.Components.Modal
+@using ReadNest_FE.Components.Nav
+@using ReadNest_FE.Dictionaries
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject ReadNest_FE.Services.UiEventService UiEventService
+
+<CascadingValue Value="this">
+    <div class="page">
+        <main>
+            <article class="content">    
+                @Body
+            </article>
+        </main>
+    </div>
+
+    <Alert Messages="@Alerts" OnClose="RemoveAlert" />
+    <Loading isLoading="@IsLoading"></Loading>
+    <Modal IsOpen="@ModalIsOpen"
+           Title="@ModalTitle"
+           ConfirmText="@ModalConfirmText"
+           CancelText="@ModalCancelText"
+           ShowCancel="@ModalShowCancel"
+           ShowOk="@ModalShowOk"
+           OnConfirm="ConfirmModal"
+           OnCancel="CancelModal">
+        @ModalContent
+    </Modal>
+    <Nav></Nav>
+
+</CascadingValue>
+
+@code {
+    public Action? OnClickOnPostNovel;
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            UiEventService.OnSetLoading += SetLoading;
+            UiEventService.OnShowAlert += ShowAlert;
+        }
+    }
+    // =====================
+    // 🌀 Loading management
+    // =====================
+    private bool IsLoading = false;
+
+    public void SetLoading(bool isload)
+    {
+        IsLoading = isload;
+        StateHasChanged();
+    }
+
+    // =====================
+    // 🔔 Alert management
+    // =====================
+    private List<AlertMessageItem> Alerts = new();
+
+    public void ShowAlert(string message, string type = "info")
+    {
+        var alert = new AlertMessageItem { Message = message, Type = type };
+        Alerts.Add(alert);
+        StateHasChanged();
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(5000);
+            RemoveAlert(alert.Id);
+        });
+    }
+    private void RemoveAlert(Guid id)
+    {
+        var item = Alerts.FirstOrDefault(a => a.Id == id);
+        if (item != null)
+        {
+            Alerts.Remove(item);
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // =====================
+    // 🪟 Modal management
+    // =====================
+    private bool ModalIsOpen = false;
+    private string ModalTitle = "Infor";
+    private string ModalConfirmText = "OK";
+    private string ModalCancelText = "Cancel";
+    private bool ModalShowCancel = true;
+    private bool ModalShowOk = true;
+    private RenderFragment? ModalContent;
+    private EventCallback? ModalOnConfirm;
+    private EventCallback? ModalOnCancel;
+
+    public void ShowModal(
+        string title,
+        RenderFragment content,
+        EventCallback? onConfirm = null,
+        EventCallback? onCancel = null,
+        string confirmText = "OK",
+        string cancelText = "Cancel",
+        bool showCancel = true,
+        bool showOk = true
+    )
+    {
+        ModalTitle = title;
+        ModalContent = content;
+        ModalConfirmText = confirmText;
+        ModalCancelText = cancelText;
+        ModalShowCancel = showCancel;
+        ModalShowOk = showOk;
+        ModalOnConfirm = onConfirm;
+        ModalOnCancel = onCancel;
+        ModalIsOpen = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmModal()
+    {
+        if (ModalOnConfirm.HasValue)
+            await ModalOnConfirm.Value.InvokeAsync();
+        CloseModal();
+    }
+
+    private async Task CancelModal()
+    {
+        if (ModalOnCancel.HasValue)
+            await ModalOnCancel.Value.InvokeAsync();
+        CloseModal();
+    }
+
+    public void CloseModal()
+    {
+        ModalIsOpen = false;
+        StateHasChanged();
+    }
+}

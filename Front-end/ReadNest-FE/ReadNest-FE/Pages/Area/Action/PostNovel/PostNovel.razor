@@ -1,0 +1,454 @@
+﻿@using ReadNest_Models
+@using ReadNest_FE.Models
+@using ReadNest_Enums
+@using ReadNest_FE.Components.AddChapters;
+@page "/action/post-novel"
+@page "/action/put-novel/{Id?}"
+@inject ReadNest_FE.Interfaces.INovelService NovelService
+@inject ReadNest_FE.Interfaces.ICategoryService CategoryService
+@inject ReadNest_FE.Interfaces.IImageService ImageService
+@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject NavigationManager Navigation
+@inject ReadNest_FE.Services.UiEventService UiEventService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>@(isNewNovel ? "Add novel" : "Update novel")</PageTitle>
+
+<div class="container">
+    <section class="novel-form-page py-10 px-4 md:px-6 lg:px-8">
+        <div class="card !p-[1rem] shadow-xl !mb-[10px]" style="--bg-primary: var(--bg-primary); --border-color: var(--border-color);">
+            @if (!isNewNovel)
+            {
+                <div class="flex justify-end">
+                    <button class="btn-icon danger" @onclick="HandleConfirmDelete">
+                        <svg
+                               viewBox="0 0 24 24" 
+                               fill="currentColor" 
+                               class="w-5 h-5">
+                            <path d="M9 3a1 1 0 00-1 1v1H4a1 1 0 100 2h1v13a2 2 0 002 2h10a2 2 0 002-2V7h1a1 1 0 100-2h-4V4a1 1 0 00-1-1H9zm2 5a1 1 0 112 0v9a1 1 0 11-2 0V8zm-4 0a1 1 0 112 0v9a1 1 0 11-2 0V8zm8 0a1 1 0 112 0v9a1 1 0 11-2 0V8z" />
+                        </svg>
+                    </button>
+                </div> 
+            }
+            <h1 class="text-2xl font-bold mb-6 text-center">
+                @(isNewNovel ? "Add New Novel" : "Update Novel")
+            </h1>
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="container-left flex-shrink-0 w-full lg:w-1/3 flex flex-col gap-3">
+                    <div @onclick="TriggerUpload"
+                         class="post-image aspect-[2/3] w-full h-[450px] sm:h-[450px] md:h-[640px] border-2 border-dashed border-border-color rounded-xl flex items-center justify-center bg-bg-secondary cursor-pointer transition-colors hover:bg-bg-primary/50"
+                         style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                        @if (detailNovel?.ImageUrl! == null)
+                        {
+                            <span class="text-text-secondary text-lg">Upload Image Novel</span>
+                        }
+                        else
+                        {
+                            <img src="@detailNovel.ImageUrl" alt="Preview" class="!w-full !h-full object-cover rounded-xl" />
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <div class="flex">
+                            <label for="name" class="block font-semibold mb-1 text-text-primary" style="color: var(--text-primary);">Name</label>
+                            <span class="text-red-600">*</span>
+                        </div>
+                        <InputText id="input-name" @bind-Value="detailNovel!.Name" class="input" placeholder="Enter novel name" />
+                        <p class="validation-message text-red-600 text-sm mt-1" for="input-name"></p>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="flex">
+                            <label for="author" class="block font-semibold mb-1 text-text-primary" style="color: var(--text-primary);">Author</label>
+                            <span class="text-red-600">*</span>
+                        </div>
+                        <InputText id="input-author" @bind-Value="detailNovel!.Author" class="input" placeholder="Enter author name" />
+                        <p class="validation-message text-red-600 text-sm mt-1" for="input-author"></p>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="flex">
+                            <label for="status" class="block font-semibold mb-1 text-text-primary" style="color: var(--text-primary);">Status</label>
+                        </div>
+                        <InputSelect id="input-status" @bind-Value="detailNovel!.Status" class="input input-select">
+                            <option value="@NovelStatus.INPROGRESS">@Utils.Utils.FormatNovelStatus(@NovelStatus.INPROGRESS)</option>
+                            <option value="@NovelStatus.COMPLETED">@Utils.Utils.FormatNovelStatus(@NovelStatus.COMPLETED)</option>
+                            <option value="@NovelStatus.STOPPED">@Utils.Utils.FormatNovelStatus(@NovelStatus.STOPPED)</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="container-right flex-grow w-full lg:w-2/3 flex flex-col gap-3">
+                    <div class="summary">
+                        <div class="flex">
+                            <label class="block font-bold text-xl mb-3 text-text-primary" style="color: var(--text-primary);">Summary</label>
+                            <span class="text-red-600">*</span>
+                        </div>
+                        <textarea id="input-summary" @bind="detailNovel!.Summary" class="input h-40 resize-none" placeholder="Enter a brief summary of the novel..." style="height: 10rem;"></textarea>
+                        <p class="validation-message text-red-600 text-sm mt-1" for="input-summary"></p>
+                    </div>
+
+                    <div class="Category">
+                        <div class="flex">
+                            <label class="block font-bold text-xl mb-3 text-text-primary" style="color: var(--text-primary);">Category</label>
+                            <span class="text-red-600">*</span>
+                        </div>
+                        <p class="validation-message text-red-600 text-sm mt-1" for="input-category"></p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-3 gap-x-4">
+                            @if (categorieCheckboxs != null)
+                            {
+                                foreach (var category in categorieCheckboxs)
+                                {
+                                    <label class="inline-flex items-center gap-2 cursor-pointer text-text-primary text-sm font-medium" style="color: var(--text-primary);">
+                                        <InputCheckbox @bind-Value="category.IsChecked"
+                                                       class="form-check-input text-link-color border-border-color focus:ring-link-color rounded"
+                                                       style="border-color: var(--border-color);" />
+                                        <span>@category.Name</span>
+                                    </label>
+                                }
+                            }
+                        </div>
+                        <p class="validation-message text-red-600 text-sm mt-1" for="input-category"></p>
+                    </div>
+
+                    <div class="button-add mt-8 flex justify-center lg:justify-end">
+                        <button class="btn-primary" @onclick="OnAddOrUpdateNovel">
+                            @(isNewNovel ? "Add novel" : "Update novel") 
+                        </button>
+                    </div>
+
+                    <AddChapters @bind-volumnVsChapters="detailNovel.VolumnVsChapters"
+                        novelId="detailNovel.Id"
+                    >
+                    </AddChapters>
+
+                </div>
+            </div>
+        </div>
+        <InputFile @ref="fileInput" id="input-main-image" OnChange="HandleFileSelected" style="display: none;" accept="image/*" />
+    </section>
+</div>
+
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [CascadingParameter] private MainLayout? Layout { get; set; }
+    // State Image
+    private InputFile? fileInput;
+    private bool isNewNovel;
+
+    List<Category> categoryList = new List<Category>();
+    List<CategoryCheckBox> categorieCheckboxs = new List<CategoryCheckBox>();
+    DetailNovel? detailNovel = null;
+
+    public class ValidationRule
+    {
+        public string Rule { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+    }
+
+    protected void HandleConfirmDelete()
+    {
+        Layout?.ShowModal("Are you sure to delete this novel", @<div></div>,EventCallback.Factory.Create(this, OnDeleteCurrentNove));
+    }
+
+    private async Task OnDeleteCurrentNove()
+    {
+        try
+        {
+            var result = await NovelService.DeleteValue(detailNovel?.Id!);
+            if (result is null) return;
+            if (result.Success)
+                Navigation.NavigateTo(Router.HomeUrl);
+
+        }catch (Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message, "error");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await OnLoaddata(Id!);
+        UiEventService.OnSelectNovelId -= HandleChangeId;
+        UiEventService.OnSelectNovelId += HandleChangeId;
+    }
+
+    async void HandleChangeId(string id)
+    {
+        await OnLoaddata(id);
+    }
+
+    async Task OnLoaddata(string _id)
+    {
+        try
+        {
+            isNewNovel = true;
+            Layout?.SetLoading(true);
+            detailNovel = new DetailNovel
+            {
+                Status = NovelStatus.INPROGRESS,
+                Summary = string.Empty
+            };
+
+            if (!string.IsNullOrWhiteSpace(Id))
+            {
+                var response = await NovelService.GetValueById(_id);
+                if (response is not null && response.Success && response.Data is not null)
+                {
+                    isNewNovel = false;
+                    detailNovel = response.Data;
+                }
+                else
+                {
+                    Layout?.ShowAlert(response?.Message ?? "Failed to load novel details.", "error");
+                }
+            }
+
+            var paginationDataCategories = await CategoryService.GetValue(string.Empty, 1, 100);
+            categoryList = paginationDataCategories?.Data?.Rows ?? new List<Category>();
+
+            var selectedCategoryIds = detailNovel.Categories?.Select(c => c.Id).ToHashSet() ?? new HashSet<string>();
+
+            categorieCheckboxs = categoryList
+                .Select(c => new CategoryCheckBox
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    IsChecked = selectedCategoryIds.Contains(c.Id)
+                })
+                .ToList();
+
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message, "error");
+        }
+        finally
+        {
+            Layout?.SetLoading(false);
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && (Store.HasContributePermission == false || Store.HasContributePermission is null) && Store.IsModeAction == false)
+        {
+            Navigation.NavigateTo(Router.HomeUrl);
+        }
+    }
+
+    private void OnNewMode()
+    {
+        isNewNovel = true;
+        detailNovel = new DetailNovel
+        {
+            Status = NovelStatus.INPROGRESS,
+            Summary = string.Empty
+        };
+        categorieCheckboxs.ForEach(c => c.IsChecked = false);
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var rulesName = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Novel name is required." },
+                new() { Rule = "value.length < 3", Message = "Novel name must be at least 3 characters." },
+                new() { Rule = "value.length > 200", Message = "Novel name must not exceed 200 characters." }
+            };
+
+            var rulesAuthor = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Author name is required." },
+                new() { Rule = "value.length < 2", Message = "Author name must be at least 2 characters." },
+                new() { Rule = "value.length > 100", Message = "Author name must not exceed 100 characters." }
+            };
+
+            var rulesSummary = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Summary is required." },
+                new() { Rule = "value.length < 50", Message = "Summary must be at least 50 characters." },
+                new() { Rule = "value.length > 5000", Message = "Summary must not exceed 2000 characters." }
+            };
+
+            var rulesCategory = new List<ValidationRule>
+            {
+                new() { Rule = "value", Message = "Please select at least one category" },
+            };
+
+            await JS.InvokeVoidAsync("setDynamicRules", "input-name", rulesName);
+            await JS.InvokeVoidAsync("setDynamicRules", "input-author", rulesAuthor);
+            await JS.InvokeVoidAsync("setDynamicRules", "input-summary", rulesSummary);
+            await JS.InvokeVoidAsync("setDynamicRules", "input-category", rulesCategory);
+
+            if (Layout != null)
+            {
+                Layout.OnClickOnPostNovel -= OnNewMode;
+                Layout.OnClickOnPostNovel += OnNewMode;
+            }
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        IBrowserFile? selectedFile = e.File;
+
+        if (selectedFile == null) return;
+
+        if (selectedFile.Size > 5 * 1024 * 1024)
+        {
+            Layout?.ShowAlert("Image size must not exceed 5MB", "error");
+            return;
+        }
+
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+        if (!allowedTypes.Contains(selectedFile.ContentType.ToLower()))
+        {
+            Layout?.ShowAlert("Only JPEG, PNG, and WebP images are allowed", "error");
+            return;
+        }
+
+        try
+        {
+            var buffer = new byte[selectedFile.Size];
+            using (var readStream = selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024))
+            {
+                await readStream.ReadAsync(buffer, 0, (int)selectedFile.Size);
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+            await File.WriteAllBytesAsync(tempFilePath, buffer);
+            using var fileStream = new FileStream(tempFilePath, FileMode.Open, FileAccess.Read);
+            Layout?.SetLoading(true);
+            var response = await ImageService.PostSingle(fileStream, selectedFile.ContentType);
+            if (response is null) return;
+            if (response.Success)
+            {
+                detailNovel!.ImageUrl = response.Data!.ImageUrl;
+                detailNovel!.ImageId = response.Data.Id;
+            }
+
+            File.Delete(tempFilePath);
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert($"Error uploading file: {ex.Message}", "error");
+        }
+        finally
+        {
+            Layout?.SetLoading(false);
+        }
+    }
+
+    private async Task TriggerUpload()
+    {
+        if (fileInput?.Element != null)
+        {
+            await JS.InvokeVoidAsync("eval", "document.querySelector('#input-main-image').click()");
+        }
+    }
+
+    private async Task<bool> ValidateInputs()
+    {
+        bool isValidName = await JS.InvokeAsync<bool>("checkDynamicRules", "input-name", detailNovel?.Name ?? "");
+        bool isValidAuthor = await JS.InvokeAsync<bool>("checkDynamicRules", "input-author", detailNovel?.Author ?? "");
+        bool isValidSummary = await JS.InvokeAsync<bool>("checkDynamicRules", "input-summary", detailNovel?.Summary ?? "");
+        bool isValidCategory = await JS.InvokeAsync<bool>("checkDynamicRules", "input-category", categorieCheckboxs == null || !categorieCheckboxs.Any(c => c.IsChecked));
+
+        var rulesVolumn = new List<ValidationRule>
+            {
+                new() { Rule = "value.trim().length === 0", Message = "Novel name is required." },
+                new() { Rule = "value.length < 3", Message = "Novel name must be at least 3 characters." },
+                new() { Rule = "value.length > 200", Message = "Novel name must not exceed 200 characters." }
+            };
+
+        var VolumnVsChaptersList = detailNovel?.VolumnVsChapters!;
+        bool isValidVolumn = true;
+        if (VolumnVsChaptersList is not null)
+            foreach (var volumn in VolumnVsChaptersList)
+            {
+                await JS.InvokeVoidAsync("setDynamicRules", $"input-volumn-{volumn.Volumn!.Id}", rulesVolumn);
+                var isValidCurrentVolumn = await JS.InvokeAsync<bool>("checkDynamicRules", $"input-volumn-{volumn.Volumn!.Id}", volumn.Volumn.Name ?? "");
+                if (!isValidCurrentVolumn)
+                {
+                    isValidVolumn = isValidCurrentVolumn;
+                }
+            }
+
+        bool isValid = isValidName && isValidAuthor && isValidSummary && isValidCategory && isValidVolumn;
+        if (!isValid)
+        {
+            await JS.InvokeVoidAsync("focusFirstInvalidField");
+        }
+        return isValid;
+    }
+
+    private async Task OnAddOrUpdateNovel()
+    {
+        bool isValid = await ValidateInputs();
+
+        if (!isValid)
+        {
+            Layout?.ShowAlert($"Validation failed. Please check all fields.", "warning");
+            return;
+        }
+
+        try
+        {
+            var selectedCategoryIds = categorieCheckboxs
+                .Where(c => c.IsChecked && c.Id != null)
+                .Select(c => c.Id)
+                .ToList();
+
+            detailNovel!.Categories = new List<Category>();
+            foreach (var categoryId in selectedCategoryIds)
+            {
+                var category = categoryList.Find(c => c.Id == categoryId);
+                if (category != null)
+                {
+                    detailNovel.Categories.Add(category);
+                }
+            }
+
+            Response<DetailNovel>? result = null;
+            Layout?.SetLoading(true);
+            if(string.IsNullOrEmpty(detailNovel.Id))
+            {
+                result = await NovelService.DetailPost(detailNovel);
+            }
+            else
+            {
+                result = await NovelService.DetailPut(detailNovel);
+            }
+            if (result == null) return;
+
+            if (result.Success)
+            {
+                detailNovel = result.Data;
+                isNewNovel = false;
+                StateHasChanged();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert($"Error adding novel: {ex.Message}", "error");
+        }
+        finally
+        {
+            Layout?.SetLoading(false);
+        }
+    }
+
+    public void Dispose()
+    {
+        UiEventService.OnSelectNovelId -= HandleChangeId;
+    }
+
+}

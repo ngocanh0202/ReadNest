@@ -1,0 +1,6 @@
+@ReadNest_BE_HostAddress = http://localhost:5000
+
+GET {{ReadNest_BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

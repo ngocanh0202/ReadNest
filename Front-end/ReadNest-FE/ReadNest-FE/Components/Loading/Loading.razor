@@ -1,0 +1,10 @@
+﻿@if (isLoading)
+{
+    <div class="container-loading">
+        <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool isLoading { get; set; }
+}

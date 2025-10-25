@@ -1,0 +1,103 @@
+﻿@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject ReadNest_FE.Interfaces.INovelService NovelService
+@using ReadNest_Models
+@using ReadNest_FE.Components.CardNovel
+@using ReadNest_FE.Components.Slide
+@using ReadNest_FE.Dictionaries
+@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<div class="container !px-2">
+    <Slide slides="@novelRandom"></Slide>
+    <div class="!my-[2rem] flex items-center gap-2 font-bold">
+        <button class="btn-icon danger !text-white" disabled>
+            <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em"><path d="M5 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"></path><path d="M9 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"></path><path d="M5 8h4"></path><path d="M9 16h4"></path><path d="M13.803 4.56l2.184 -.53c.562 -.135 1.133 .19 1.282 .732l3.695 13.418a1.02 1.02 0 0 1 -.634 1.219l-.133 .041l-2.184 .53c-.562 .135 -1.133 -.19 -1.282 -.732l-3.695 -13.418a1.02 1.02 0 0 1 .634 -1.219l.133 -.041z"></path><path d="M14 9l4 -1"></path><path d="M16 16l3.923 -.98"></path></svg>
+        </button>
+        <p class="underline !text-lg !flex !flex-col !gap-1">
+            <div>Novels</div>
+            <div class="!h-[5px] !w-full !bg-red-300"></div>
+        </p>
+    </div>
+    <div class="novel-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        @if (novels is not null && novels.Any())
+        {
+            foreach(var n in novels)
+            {
+                <CardNovel novel="@n"></CardNovel>
+            }
+        }
+    </div>
+    <div class="!mb-[2rem] !flex flex-col !justify-between !items-center">
+        @if (Page != TotalPage)
+        {
+            <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+            <button class="btn-second !w-[200px]"
+                    disabled="@IsLoading"
+                    @onclick:stopPropagation="true"
+                    @onclick="() => HandleLoadNovel(Page, PageSize)">
+                @if (IsLoading)
+                {
+                    <span class="loader"></span>
+                }
+                else
+                {
+                    <text>Load more</text>
+                }
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] MainLayout? mainLayout { get; set; }
+    Response<NovelHomePage>? response { get; set; }
+    List<NovelResponese> novels { get; set; } = new();
+    List<OverviewNovel> novelRandom { get; set; } = new();
+    bool IsLoading = false;
+    int Page = 1;
+    int PageSize = 8;
+    int TotalPage = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        mainLayout?.SetLoading(true);
+        try
+        {
+            response = await NovelService.GetNovelsInHomePage(Page, PageSize);
+            if (response is null) return;
+            if (response.Success)
+            {
+                novels = response!.Data!.PaginationData!.Rows;
+                TotalPage = response!.Data!.PaginationData!.TotalPages;
+                novelRandom = response!.Data!.RandomNovel!;
+            }
+        }
+        catch (Exception ex)
+        {
+            mainLayout?.ShowAlert(ex.Message, "error");
+        }
+        finally
+        {
+            mainLayout?.SetLoading(false);
+        }
+    }
+
+    private async Task HandleLoadNovel(int page, int pageSize)
+    {
+        IsLoading = true;
+        Page = page + 1;
+        var result = await NovelService.GetValue(string.Empty, Page, PageSize);
+        if (result.Success)
+        {
+            TotalPage = result.Data!.TotalPages;
+            if (result!.Data!.Rows.Any())
+                novels?.AddRange(result!.Data!.Rows);
+        }
+        else
+        {
+            mainLayout?.ShowAlert(result.Message, "error");
+        }
+        IsLoading = false;
+    }
+}
