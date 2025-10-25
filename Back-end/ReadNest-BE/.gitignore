@@ -365,4 +365,5 @@ FodyWeavers.xsd
 Uploads/
 ReadNestDb.db
 appsettings.json
+appsettings.Development.json
 Migrations/
