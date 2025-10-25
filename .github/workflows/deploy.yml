@@ -28,14 +28,13 @@ jobs:
           
       - name: Publish
         run: |
-          cd Front-end/ReadNest-FE
-          dotnet restore ReadNest-FE.sln
-          dotnet publish ReadNest-FE.sln -c Release -p:UseAppHost=false
-          PUBLISH_DIR=$(find . -path "*/bin/Release/*/publish/wwwroot" -type d | head -n 1)
-          echo "Publish dir: $PUBLISH_DIR"
-          cd ../..
+          cd Front-end/ReadNest-FE/ReadNest-FE
+          dotnet publish -c Release -o ./publish
+          
+      - name: Prepare deployment
+        run: |
           mkdir -p ./_site
-          cp -r "Front-end/ReadNest-FE/$PUBLISH_DIR/"* ./_site/
+          cp -r Front-end/ReadNest-FE/ReadNest-FE/publish/wwwroot/* ./_site/
 
       - name: Add .nojekyll and 404.html
         run: |
