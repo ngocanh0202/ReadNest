@@ -89,13 +89,13 @@
                                 }
                             </div>
 
-                            <div class="flex-1 min-w-0 striped-rows overflow-x-auto w-0">
+                            <div class="flex-1 min-w-0 striped-rows overflow-x-auto">
                                 @if (volumnVsChapter.Chapters?.Any() == true)
                                 {
                                     @foreach (var chapter in volumnVsChapter.Chapters)
                                     {
                                         <div class="flex items-center justify-between !py-3 !gap-2">
-                                            <a class="truncate block flex-1 max-w-[calc(100%-120px)]" @onclick="() => HandleNavigationToPostChapter(chapter.Id)">
+                                            <a class="!line-clamp-1 break-all block flex-1 max-w-[calc(100%-120px)]" @onclick="() => HandleNavigationToPostChapter(chapter.Id)">
                                                 @chapter.Name
                                             </a>
 
