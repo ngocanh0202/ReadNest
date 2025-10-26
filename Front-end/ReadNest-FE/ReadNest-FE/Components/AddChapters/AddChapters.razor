@@ -95,7 +95,12 @@
                                     @foreach (var chapter in volumnVsChapter.Chapters)
                                     {
                                         <div class="flex items-center justify-between !py-3 !gap-2">
-                                            <a class="!line-clamp-1 break-all block flex-1 max-w-[calc(100%-120px)]" @onclick="() => HandleNavigationToPostChapter(chapter.Id)">
+                                            <a class="!line-clamp-1 break-all block flex-1 max-w-[calc(100%-120px)] cursor-pointer select-none"
+                                               @onclick="() => HandleNavigationToPostChapter(chapter.Id)"
+                                               @onpointerdown="(e) => StartHoldPress(e, volumnVsChapter.Volumn.Id, chapter.Id)"
+                                               @onpointerup="CancelHoldPress"
+                                               @onpointerleave="CancelHoldPress"
+                                               @oncontextmenu:preventDefault>
                                                 @chapter.Name
                                             </a>
 
@@ -160,6 +165,10 @@
     private int chapterOrderCounter = 1;
     private Dictionary<string, string> newChapterNames = new();
 
+    private System.Threading.Timer? holdTimer;
+    private bool isHoldTriggered = false;
+    private const int HoldDurationMs = 500; 
+
     protected override void OnParametersSet()
     {
         volumnVsChapters ??= new List<VolumnVsChapters>();
@@ -223,7 +232,7 @@
         var volumn = volumnVsChapters?.FirstOrDefault(h => h.Volumn?.Id == volumnId);
         if (volumn != null)
         {
-            volumn.IsExpanded = volumn.IsExpanded == true ||  volumn.IsExpanded == null ? false : true;
+            volumn.IsExpanded = volumn.IsExpanded == true || volumn.IsExpanded == null ? false : true;
         }
     }
 
@@ -263,7 +272,7 @@
     private async Task HandleDeleteVolumn(string volumnId)
     {
         var volumn = volumnVsChapters?.FirstOrDefault(v => v.Volumn?.Id == volumnId);
-    
+
         if (volumn?.Volumn?.CreateBy != null)
         {
             ShowModalToConfirmDelete(true, volumnId);
@@ -278,7 +287,7 @@
     {
         var volumn = volumnVsChapters?.FirstOrDefault(v => v.Volumn?.Id == volumnId);
         var chapter = volumn?.Chapters?.FirstOrDefault(c => c.Id == chapterId);
-    
+
         if (chapter?.CreateBy != null)
         {
             ShowModalToConfirmDelete(false, volumnId, chapterId);
@@ -293,21 +302,68 @@
     {
         var itemType = isVolumn ? "Volume" : "Chapter";
         var message = $"Are you sure you want to delete this {itemType}?";
-    
+
         Layout?.ShowModal(
             message,
             @<div></div>,
-            EventCallback.Factory.Create(this, async () =>
+        EventCallback.Factory.Create(this, async () =>
+        {
+            if (isVolumn)
             {
-                if (isVolumn)
-                {
-                    await DeleteVolumn(volumnId);
-                }
-                else if (chapterId != null)
-                {
-                    await DeleteChapter(volumnId, chapterId);
-                }
-            })
+                await DeleteVolumn(volumnId);
+            }
+            else if (chapterId != null)
+            {
+                await DeleteChapter(volumnId, chapterId);
+            }
+        })
+        );
+    }
+
+    private void StartHoldPress(PointerEventArgs e, string volumnId, string chapterId)
+    {
+        isHoldTriggered = false;
+
+        holdTimer?.Dispose();
+        holdTimer = new System.Threading.Timer(_ =>
+        {
+            isHoldTriggered = true;
+            InvokeAsync(() => ShowRenameModal(volumnId, chapterId));
+        }, null, HoldDurationMs, Timeout.Infinite);
+    }
+
+    private void CancelHoldPress()
+    {
+        holdTimer?.Dispose();
+        holdTimer = null;
+    }
+
+    private void ShowRenameModal(string volumnId, string chapterId)
+    {
+        var volumn = volumnVsChapters?.FirstOrDefault(v => v.Volumn?.Id == volumnId);
+        var chapter = volumn?.Chapters?.FirstOrDefault(c => c.Id == chapterId);
+
+        if (chapter == null) return;
+
+        var newName = chapter.Name;
+
+        Layout?.ShowModal(
+            "Rename Chapter",
+            @<div class="flex flex-col gap-4">
+            <input type="text"
+                   @bind="newName"
+                   placeholder="Enter new chapter name"
+                   class="input w-full" />
+        </div>,
+        EventCallback.Factory.Create(this, async () =>
+        {
+            if (!string.IsNullOrWhiteSpace(newName) && chapter != null)
+            {
+                chapter.Name = newName;
+                await NotifyChanged();
+                StateHasChanged();
+            }
+        })
         );
     }
 
@@ -419,6 +475,12 @@
 
     private void HandleNavigationToPostChapter(string chapterId)
     {
+        if (isHoldTriggered)
+        {
+            isHoldTriggered = false;
+            return;
+        }
+
         var chapter = volumnVsChapters?
             .SelectMany(c => c.Chapters ?? new List<Chapter>())
             .FirstOrDefault(c => c.Id == chapterId);
@@ -429,5 +491,10 @@
             return;
         }
         Navigation.NavigateTo(Router.ChapterUrl.Replace("{id}", chapterId));
+    }
+
+    public void Dispose()
+    {
+        holdTimer?.Dispose();
     }
 }
