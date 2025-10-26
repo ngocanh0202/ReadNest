@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.RateLimiting;
 using ReadNest_BE.Exceptions;
 using ReadNest_BE.Interfaces.Repositories;
+using ReadNest_BE.Repositories;
 using ReadNest_BE.Services;
 using ReadNest_Models;
 
@@ -14,17 +15,20 @@ namespace ReadNest_BE.Controllers
     public class NovelController : BaseController<Novel>
     {
         IImageRepository _imageRepository;
+        IReadingHistoryRepository _ReadingHistoryRepository;
         IChapterRepository _chapterRepository;
         ICategoryNovelRepository _categoryNovelRepository;
         IVolumnRepository _volumnRepository;
         public NovelController(INovelRepository repository, 
             JwtService jwtService, 
-            IImageRepository imageRepository, 
+            IImageRepository imageRepository,
+            IReadingHistoryRepository readingHistoryRepository,
             IChapterRepository chapterRepository,
             ICategoryNovelRepository categoryNovelRepository,
             IVolumnRepository volumnRepository
             ) : base(repository, jwtService)
         {
+            _ReadingHistoryRepository = readingHistoryRepository;
             _imageRepository = imageRepository;
             _chapterRepository = chapterRepository;
             _categoryNovelRepository = categoryNovelRepository;

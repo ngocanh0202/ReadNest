@@ -149,6 +149,7 @@ namespace ReadNest_FE.Services.Features
             _store.RefreshToken = null;
             _store.UserName = string.Empty;
             await _js.InvokeVoidAsync("localStorage.setItem", "authToken", string.Empty);
+            await _js.InvokeVoidAsync("localStorage.removeItem", "readingHistories");
             _navigation.NavigateTo(RouterManager.GetRouter(Enums.RouterType.LOGIN)!);
         }
 

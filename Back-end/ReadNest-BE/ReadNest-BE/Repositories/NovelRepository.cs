@@ -13,12 +13,14 @@ namespace ReadNest_BE.Repositories
 {
     public class NovelRepository : ExtendRepository<Novel>, INovelRepository
     {
+        IReadingHistoryRepository _readingHistoryRepository;
         ICategoryNovelRepository _categoryNovelRepository;
         IVolumnRepository _volumnRepository;
         IImageRepository _imageRepository;
         IHttpContextAccessor _httpContextAccessor;
-        public NovelRepository(IHttpContextAccessor httpContextAccessor, AppDbContext appDbContext, JwtService jwtService, ICategoryNovelRepository categoryNovelRepository, IVolumnRepository volumnRepository, IImageRepository imageRepository) : base(appDbContext, jwtService)
+        public NovelRepository(IReadingHistoryRepository readingHistoryRepository, IHttpContextAccessor httpContextAccessor, AppDbContext appDbContext, JwtService jwtService, ICategoryNovelRepository categoryNovelRepository, IVolumnRepository volumnRepository, IImageRepository imageRepository) : base(appDbContext, jwtService)
         {
+            _readingHistoryRepository = readingHistoryRepository;
             _categoryNovelRepository = categoryNovelRepository;
             _volumnRepository = volumnRepository;
             _imageRepository = imageRepository;
@@ -33,6 +35,8 @@ namespace ReadNest_BE.Repositories
                 var result = await SaveChange();
                 var resultDeleteCategoryNovel = await _categoryNovelRepository.DeleteByNovelId(novel.Id);
                 var resultDeleteVolumn = await _volumnRepository.DeleteByNovelId(novel.Id);
+                var resdingHistory = await _context.ReadingHistorys.Where(r => r.NovelId == novel.Id).ToListAsync();
+                await _readingHistoryRepository.DeleteRange(resdingHistory);
                 var resultDeletImage = true;
                 if (!string.IsNullOrEmpty(novel.ImageId))
                 {
