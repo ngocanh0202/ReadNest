@@ -37,7 +37,7 @@ var store = host.Services.GetRequiredService<Store>();
 var savedToken = await js.InvokeAsync<string>("localStorage.getItem", "authToken");
 var savedHost = await js.InvokeAsync<string>("localStorage.getItem", "host");
 var savedUserName = await js.InvokeAsync<string>("localStorage.getItem", "userName");
-var savedHasContributePermissionString = await js.InvokeAsync<string>("sessionStorage.getItem", "HasContributePermission");
+var savedHasContributePermissionString = await js.InvokeAsync<string>("localStorage.getItem", "HasContributePermission");
 var savedReadingHistory = await js.InvokeAsync<string>("localStorage.getItem", "readingHistories");
 
 

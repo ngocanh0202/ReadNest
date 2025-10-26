@@ -236,7 +236,7 @@
                 await JS.InvokeVoidAsync("localStorage.setItem", "authToken", Store.Token);
                 await JS.InvokeVoidAsync("localStorage.setItem", "userName", Store.UserName);
                 await JS.InvokeVoidAsync("localStorage.setItem", "host", Store.Host);
-                await JS.InvokeVoidAsync("sessionStorage.setItem", "HasContributePermission", Store.HasContributePermission);
+                await JS.InvokeVoidAsync("localStorage.setItem", "HasContributePermission", Store.HasContributePermission);
                 await Task.Delay(1000);
                 Navigation.NavigateTo(Router.HomeUrl!);
             }
