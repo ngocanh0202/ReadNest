@@ -129,7 +129,7 @@ builder.Services.AddCors(options =>
             }
             else
             {
-                policy.WithOrigins("https://ngocanh0202.github.io/ReadNest-FE/")
+                policy.WithOrigins("https://ngocanh0202.github.io")
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials();
@@ -226,7 +226,14 @@ builder.Services.AddAuthentication(option =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+}
+
 app.UseCors("AllowFrontend");
+
 string uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
 if (!Directory.Exists(uploadsPath))
 {
@@ -243,6 +250,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 

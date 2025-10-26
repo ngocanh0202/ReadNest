@@ -112,6 +112,22 @@ namespace ReadNest_BE.Controllers
                     {
                         entity.ImageUrl = image.ImageUrl;
                     }
+                    if(entity.VolumnVsChapters is not null)
+                    {
+                        foreach (var vol in entity.VolumnVsChapters)
+                        {
+                            string volImageId = vol.Volumn?.ImageId!;
+                            if (!string.IsNullOrEmpty(volImageId))
+                            {
+                                var Volimage = await _imageRepository.GetById(volImageId);
+                                if (image != null)
+                                {
+                                    string volImageUrl = Volimage.ImageUrl!;
+                                    vol.Volumn!.ImageUrl = volImageUrl;
+                                }
+                            }
+                        }
+                    }    
                 }
                 return Ok(new Response<DetailNovel>(entity, "Get novel successfully", true));
             }

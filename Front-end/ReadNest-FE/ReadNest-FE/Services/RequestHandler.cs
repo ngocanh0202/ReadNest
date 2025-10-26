@@ -229,7 +229,7 @@ namespace ReadNest_FE.Services
                 if (response.IsSuccessStatusCode)
                 {
                     Response<bool>? data = await response.Content.ReadFromJsonAsync<Response<bool>>();
-                    _uiEventService.ShowAlert(data?.Message!, "");
+                    _uiEventService.ShowAlert(data?.Message!, "error");
                     return data!;
                 }
                 else
