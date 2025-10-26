@@ -52,7 +52,7 @@
     {
         if (firstRender)
         {
-            if (firstRender && (Store.HasContributePermission == false || Store.HasContributePermission is null) && !Store.IsModeAction)
+            if (firstRender && (Store.HasContributePermission == false || Store.HasContributePermission is null) && !Store.IsModeReader)
             {
                 Navigation.NavigateTo(Router.HomeUrl);
             }

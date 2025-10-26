@@ -197,6 +197,7 @@ builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IContentRepository, ContentRepository>();
 builder.Services.AddScoped<INovelRepository, NovelRepository>();
 builder.Services.AddScoped<IPromptRepository, PromptRepository>();
+builder.Services.AddScoped<IReadingHistoryRepository, ReadingHistoryRepository>();
 
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -250,9 +251,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseSwagger();
-app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 

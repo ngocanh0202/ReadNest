@@ -21,7 +21,7 @@
                     </button>
                     @if (Store.HasContributePermission == true && Store.HasContributePermission is not null)
                     {
-                        <ToggleModeSwitch @bind-isChecked="Store.IsModeAction" onCheckedChanged="handleChangeMode"></ToggleModeSwitch>
+                        <ToggleModeSwitch @bind-isChecked="Store.IsModeReader" onCheckedChanged="handleChangeMode"></ToggleModeSwitch>
                     }
                 </div>
             </div>

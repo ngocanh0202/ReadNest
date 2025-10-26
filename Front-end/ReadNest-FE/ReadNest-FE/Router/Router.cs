@@ -15,15 +15,17 @@ namespace ReadNest_FE.Router
         public readonly string PostNovelUrl = RouterManager.GetRouter(RouterType.POSTNOVEL)!;
         public readonly string PostChapterUrl = RouterManager.GetRouter(RouterType.POSTCHAPTER)!;
         public readonly string FilterUrl = RouterManager.GetRouter(RouterType.FILTER)!;
+        public readonly string FilterCategory = RouterManager.GetRouter(RouterType.FILTERBYCATEGORY)!;
+        public readonly string HistoryUrl = RouterManager.GetRouter(RouterType.HISTORY)!;
         public readonly string None = RouterManager.GetRouter(RouterType.NONE)!;
 
-        public string NovelUrl => _store.IsModeAction
-            ? RouterManager.GetRouter(RouterType.PUTNOVEL)!
-            : RouterManager.GetRouter(RouterType.NOVEL)!;
+        public string NovelUrl => _store.IsModeReader
+            ? RouterManager.GetRouter(RouterType.NOVEL)!
+            : RouterManager.GetRouter(RouterType.PUTNOVEL)!;
 
-        public string ChapterUrl => _store.IsModeAction
-            ? RouterManager.GetRouter(RouterType.UPDATECHAPTER)!
-            : RouterManager.GetRouter(RouterType.CHAPTER)!;
+        public string ChapterUrl => _store.IsModeReader
+            ? RouterManager.GetRouter(RouterType.CHAPTER)!
+            : RouterManager.GetRouter(RouterType.UPDATECHAPTER)!;
 
         public Router(Store.Store store)
         {

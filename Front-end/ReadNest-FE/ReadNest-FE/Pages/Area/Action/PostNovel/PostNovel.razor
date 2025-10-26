@@ -234,7 +234,7 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender && (Store.HasContributePermission == false || Store.HasContributePermission is null) && Store.IsModeAction == false)
+        if (firstRender && (Store.HasContributePermission == false || Store.HasContributePermission is null) && Store.IsModeReader == false)
         {
             Navigation.NavigateTo(Router.HomeUrl);
         }

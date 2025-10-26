@@ -10,6 +10,7 @@
 @using ReadNest_FE.Components.Categories
 
 
+
 <div class="container !px-2">
     <div class="!my-[1rem] flex items-center gap-2 font-bold">
         <button class="btn-icon danger !text-white" disabled>
@@ -87,6 +88,7 @@
 
 @code {
     [CascadingParameter] MainLayout? mainLayout { get; set; }
+    [Parameter, SupplyParameterFromQuery] public string? CategoryName { get; set; }
     List<CategoryCheckBox>? CategorieCheckboxs { get; set; }
     List<NovelResponese> novels = new List<NovelResponese>();
     NovelFilter novelFilter = new NovelFilter() 
@@ -110,9 +112,14 @@
             {
                 Id = c.Id,
                 Name = c.Name,
-                IsChecked = false
+                IsChecked = c.Name!.Equals(CategoryName)
             })
             .ToList();
+
+        if (!string.IsNullOrEmpty(CategoryName))
+        {
+            await HandleSearch();
+        }
     }  
 
     private async Task HandleSearch()

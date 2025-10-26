@@ -7,6 +7,7 @@ namespace ReadNest_BE.Infrastructure
     public class AppDbContext : DbContext
     {
         public DbSet<Volumn> Volumns { get; set; }
+        public DbSet<ReadingHistory> ReadingHistorys { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<CategoryNovel> CategorieNovels { get; set; }
@@ -23,6 +24,11 @@ namespace ReadNest_BE.Infrastructure
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
+            modelBuilder.Entity<ReadingHistory>()
+                .HasIndex(r => new { r.CreateBy, r.NovelId })
+                .IsUnique();
+
             modelBuilder.Entity<Content>()
                 .HasIndex(c => new { c.ChapterId, c.Order })
                 .HasDatabaseName("IX_Content_ChapterId_Order");

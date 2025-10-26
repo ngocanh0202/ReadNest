@@ -5,8 +5,11 @@
 @using ReadNest_FE.Components.ToggleModeSwitch
 @using ReadNest_FE.Models
 @layout LayoutForReader
+@inject ReadNest_FE.Store.Store Store
+@inject IJSRuntime Js
 @inject ReadNest_FE.Interfaces.IChapterService ChapterService
 @inject ReadNest_FE.Interfaces.IContentService ContentService
+@inject ReadNest_FE.Interfaces.IReadingHistoryService ReadingHistoryService
 @page "/chapter/{Id}"
 
 <PageTitle>@(currentChapter?.ChapterName ?? "Chapter")</PageTitle>
@@ -102,11 +105,44 @@
                     detailChapter?.NextChapter?.Id!,
                     detailChapter?.PrevChapter?.Id!
                 );
+
+                await ReadingHistoryService.Post(new ReadingHistory
+                {
+                    NovelId = currentChapter?.NovelId!,
+                    VolumnId = currentChapter?.VolumnId!,
+                    ChapterId = Id!,
+                });
+
+                await UpdateReadingHistoryLocal();
             }
         }
         catch(Exception ex)
         {
             Layout?.ShowAlert(ex.Message, "error");
+        }
+    }
+
+    private async Task UpdateReadingHistoryLocal()
+    {
+        if (currentChapter is null)
+            return;
+
+        Store.readingHistories ??= new List<ReadingHistoryDto>();
+
+        var existing = Store.readingHistories.FirstOrDefault(x => x.NovelId == currentChapter.NovelId && x.ChapterId == Id);
+        if (existing != null)
+        {
+            Store.readingHistories.Remove(existing);
+            Store.readingHistories.Insert(0, existing);
+            await Js.InvokeVoidAsync(
+                "localStorage.setItem",
+                "readingHistories",
+                System.Text.Json.JsonSerializer.Serialize(Store.readingHistories)
+            );
+        }
+        else
+        {
+            await ReadingHistoryService.Get();
         }
     }
 

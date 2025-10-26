@@ -11,9 +11,11 @@
         IMAGES,
         POSTCHAPTER,
         FILTER,
+        FILTERBYCATEGORY,
         CHAPTER,
         NOVEL,
         UPDATECHAPTER,
+        HISTORY,
         NONE
     }
 }

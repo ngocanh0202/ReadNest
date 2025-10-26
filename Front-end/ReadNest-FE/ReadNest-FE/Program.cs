@@ -7,6 +7,8 @@ using ReadNest_FE.Router;
 using ReadNest_FE.Services;
 using ReadNest_FE.Services.Features;
 using ReadNest_FE.Store;
+using ReadNest_Models;
+using System.Text.Json;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -23,6 +25,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<INovelService, NovelService>();
 builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IVolumnService, VolumnService>();
+builder.Services.AddScoped<IReadingHistoryService, ReadingHistoryService>();
 builder.Services.AddSingleton<Router>();
 builder.Services.AddSingleton<Store>();
 
@@ -35,6 +38,8 @@ var savedToken = await js.InvokeAsync<string>("localStorage.getItem", "authToken
 var savedHost = await js.InvokeAsync<string>("localStorage.getItem", "host");
 var savedUserName = await js.InvokeAsync<string>("localStorage.getItem", "userName");
 var savedHasContributePermissionString = await js.InvokeAsync<string>("sessionStorage.getItem", "HasContributePermission");
+var savedReadingHistory = await js.InvokeAsync<string>("localStorage.getItem", "readingHistories");
+
 
 if (!string.IsNullOrEmpty(savedToken))
 {
@@ -52,5 +57,18 @@ if (!string.IsNullOrEmpty(savedHasContributePermissionString))
 {
     store.HasContributePermission = bool.Parse(savedHasContributePermissionString);
 }
+if (!string.IsNullOrEmpty(savedReadingHistory))
+{
+    try
+    {
+        store.readingHistories = JsonSerializer.Deserialize<List<ReadingHistoryDto>>(savedReadingHistory);
+    }
+    catch
+    {
+        store.readingHistories = null;
+    }
+}
+
+store.IsModeReader = true;
 
 await host.RunAsync();

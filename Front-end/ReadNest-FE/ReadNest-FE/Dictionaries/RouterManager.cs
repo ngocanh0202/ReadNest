@@ -2,29 +2,36 @@
 
 namespace ReadNest_FE.Dictionaries
 {
-    public class RouterManager
+    public static class RouterManager
     {
-        public static Dictionary<RouterType, string> routers = new Dictionary<RouterType, string>()
+        private static readonly bool IsDevelopment =
+            #if DEBUG
+                true;
+            #else
+                false;
+            #endif
+
+        private static string Base => IsDevelopment ? "/" : "/ReadNest/";
+
+        public static readonly Dictionary<RouterType, string> routers = new()
         {
-            { RouterType.HOME, "/ReadNest/" },
-            { RouterType.LOGIN, "/ReadNest/login" },
-            { RouterType.REGISTER, "/ReadNest/register" },
-            { RouterType.PROFILE, "/ReadNest/profile" },
-            { RouterType.IMAGES, "/ReadNest/images" },
-            { RouterType.FILTER, "/ReadNest/filter" },
-            { RouterType.CHAPTER, "/ReadNest/chapter/{id}" },
-            { RouterType.NOVEL, "/ReadNest/novel/{id}" },
-            { RouterType.POSTNOVEL, "/ReadNest/action/post-novel" },
-            { RouterType.PUTNOVEL, "/ReadNest/action/put-novel/{id}" },
-            { RouterType.POSTCHAPTER, "/ReadNest/action/post-chapter/{id}" },
-            { RouterType.UPDATECHAPTER, "/ReadNest/action/update-chapter/{id}" },
+            { RouterType.HOME, $"{Base}" },
+            { RouterType.LOGIN, $"{Base}login" },
+            { RouterType.REGISTER, $"{Base}register" },
+            { RouterType.PROFILE, $"{Base}profile" },
+            { RouterType.IMAGES, $"{Base}images" },
+            { RouterType.FILTER, $"{Base}filter" },
+            { RouterType.FILTERBYCATEGORY, $"{Base}filter?CategoryName={{name}}" },
+            { RouterType.HISTORY, $"{Base}History" },
+            { RouterType.CHAPTER, $"{Base}chapter/{{id}}" },
+            { RouterType.NOVEL, $"{Base}novel/{{id}}" },
+            { RouterType.POSTNOVEL, $"{Base}action/post-novel" },
+            { RouterType.PUTNOVEL, $"{Base}action/put-novel/{{id}}" },
+            { RouterType.POSTCHAPTER, $"{Base}action/post-chapter/{{id}}" },
+            { RouterType.UPDATECHAPTER, $"{Base}action/update-chapter/{{id}}" },
             { RouterType.NONE, "#" }
         };
 
-        public static string? GetRouter(RouterType type)
-        {
-            return routers[type] ?? null;
-        }
-
+        public static string? GetRouter(RouterType type) => routers[type];
     }
 }

@@ -15,7 +15,7 @@
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <span>@(Store.IsModeAction ? "Action" : "ReadNest")</span>
+                <span>@(Store.IsModeReader ? "ReadNest" : "Action")</span>
             </a>
         </div>
 
@@ -54,7 +54,7 @@
                 </label>
             </div>
 
-            @if ((Store.HasContributePermission == true && Store.HasContributePermission is not null) && Store.IsModeAction )
+            @if ((Store.HasContributePermission == true && Store.HasContributePermission is not null) && !Store.IsModeReader )
             {
                 <a @onclick="OnClickButtonPostNovel" class="btn-post-novel">
                     <svg class="post-icon" viewBox="0 0 24 24" fill="none">
@@ -112,7 +112,7 @@
                 </span>
             </label>
         </div>
-        @if ((Store.HasContributePermission == true && Store.HasContributePermission is not null) && Store.IsModeAction)
+        @if ((Store.HasContributePermission == true && Store.HasContributePermission is not null) && !Store.IsModeReader)
         {
             <a @onclick="() => { ToggleMobileMenu(); OnClickButtonPostNovel();}" class="btn-post-novel mobile">
                 <svg class="post-icon" viewBox="0 0 24 24" fill="none">

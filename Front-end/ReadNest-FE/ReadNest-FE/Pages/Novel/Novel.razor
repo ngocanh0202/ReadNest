@@ -38,7 +38,7 @@
                         <div class="mt-2 flex flex-wrap gap-2">
                             @foreach (var cat in detailNovel.Categories ?? new List<Category>())
                             {
-                                <span class="select-none !px-3 !py-1 !bg-bg-secondary !rounded-lg !text-sm !border !border-border-color hover:!bg-bg-tertiary hover:scale-105 hover:!shadow-md active:scale-95 transition-all duration-200 ease-in-out cursor-pointer">@cat.Name</span>
+                                <span @onclick="() => HandleRedirectToFilter(cat.Name!)" class="select-none !px-3 !py-1 !bg-bg-secondary !rounded-lg !text-sm !border !border-border-color hover:!bg-bg-tertiary hover:scale-105 hover:!shadow-md active:scale-95 transition-all duration-200 ease-in-out cursor-pointer">@cat.Name</span>
                             }
                         </div>
 
@@ -51,7 +51,7 @@
 
                     <div class="!flex-1">
                         <p class="font-semibold mb-1">Summary:</p>
-                        <p class="!line-clamp-10 break-all whitespace-pre-line text-sm leading-relaxed max-h-[140px] overflow-y-auto scrollbar-style">@detailNovel.Summary</p>
+                        <p class="whitespace-pre-line text-sm leading-relaxed !max-h-[140px] !overflow-y-auto scrollbar-style">@detailNovel.Summary</p>
                     </div>
 
                     <div class="flex gap-3 mt-4">
@@ -175,6 +175,11 @@
             isLoading = false;
             StateHasChanged();
         }
+    }
+
+    void HandleRedirectToFilter(string name)
+    {
+        Navigation.NavigateTo(Router.FilterCategory.Replace("{name}", name));
     }
 
     async void HandleChangeId(string id)
