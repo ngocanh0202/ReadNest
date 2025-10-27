@@ -31,12 +31,6 @@
                     <circle cx="12" cy="7" r="4"></circle>
                 </svg>
             </button>
-            <button class="nav-btn" @onclick="() => OnShowTableOfContents()" @onclick:stopPropagation="true" title="Table of Contents">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-            </button>
             <button 
                 class="nav-btn @(CanUploadChapterContent ? "" : "disabled")"
                 disabled="@(CanUploadChapterContent ? false : true)"
@@ -59,12 +53,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-            </button>
-            <button class="nav-btn" @onclick="OnShowTableOfContents" title="Table of Contents">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                 </svg>
             </button>
             <button 
@@ -221,36 +209,6 @@
         CurrentChapterId = newCurrentChapterId;
         Navigation.NavigateTo(Router.ChapterUrl.Replace("{id}", CurrentChapterId));
         OnNotifyChangeChapter?.Invoke(CurrentChapterId!);
-    }
-
-    private async void OnShowTableOfContents()
-    {
-        try
-        {
-            if (CurrentChapterId == null) return;
-            if (VolumnContents == null )
-            {
-                var response = await VolumnService.GetVolumnContentByChapterId(CurrentChapterId);
-                if (response.Success)
-                {
-                    VolumnContents = response.Data;
-                }
-            }
-
-            if (VolumnContents != null)
-            {
-                ShowModal(
-                    "Table of Contents",
-                    @<TableContent CurrentChapterId="@CurrentChapterId" VolumnContents=VolumnContents></TableContent>,
-                    showCancel: false,
-                    showOk: false
-                );
-            }
-        }
-        catch(Exception ex)
-        {
-            ShowAlert(ex.Message, "erro");
-        }
     }
 
     private void OnShowProfile()

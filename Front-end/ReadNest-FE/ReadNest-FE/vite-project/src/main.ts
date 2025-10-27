@@ -15,6 +15,7 @@ declare global {
             clickElement: (element: HTMLElement | null) => void;
             removeDom: (selector: string) => void;
             CopyToclipboard: (text: string) => void;
+            scrollToSelector: (selector: string, behavior: ScrollBehavior ) => void
         };
     }
 }
@@ -31,6 +32,14 @@ window.reader = {
     },
     CopyToclipboard(text: string) {
         navigator.clipboard?.writeText(text).catch(err => console.error("Clipboard error:", err));
+    },
+    scrollToSelector: (selector: string, behavior: ScrollBehavior = "smooth") => {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.scrollIntoView({ behavior, block: "start" });
+        } else {
+            window.scrollBy({ top: 0, behavior });
+        }
     }
 };
 

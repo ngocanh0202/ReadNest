@@ -11416,6 +11416,10 @@ window.reader = {
   },
   CopyToclipboard(i) {
     navigator.clipboard?.writeText(i).catch((t) => console.error("Clipboard error:", t));
+  },
+  scrollToSelector: (i, t = "smooth") => {
+    const e = document.querySelector(i);
+    e ? e.scrollIntoView({ behavior: t, block: "start" }) : window.scrollBy({ top: 0, behavior: t });
   }
 };
 export {

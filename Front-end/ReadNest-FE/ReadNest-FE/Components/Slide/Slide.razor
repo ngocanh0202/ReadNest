@@ -14,7 +14,7 @@
                         @if (!string.IsNullOrEmpty(slide.Name))
                         {
                             <div class="slide-content">
-                                <a class="!line-clamp-5 break-all" href="@(Router.NovelUrl!.Replace("{id}", slide.Id))">@slide.Name</a>
+                                <a class="!line-clamp-3" href="@(Router.NovelUrl!.Replace("{id}", slide.Id))">@slide.Name</a>
                                 @if (!string.IsNullOrEmpty(slide.Summary))
                                 {
                                     <p class="max-h-[100px] overflow-y-auto scrollbar-style">@slide.Summary</p>

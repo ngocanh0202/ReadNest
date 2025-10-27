@@ -18,8 +18,8 @@
     @if (currentChapter is not null)
     {
         <div class="reader-chapter">
-            <div class="title !line-clamp-10 break-all">@currentChapter.VolumnName</div>
-            <div class="sub-title !line-clamp-10 break-all">@currentChapter.ChapterName</div>
+            <div class="title !line-clamp-6">@currentChapter.VolumnName</div>
+            <div class="sub-title !line-clamp-10">@currentChapter.ChapterName</div>
             <div class="sub-p">
                 Length: @lenghWords words – Updated: @timeAgo
             </div>
@@ -38,7 +38,7 @@
                 }
                 else
                 {
-                    <p class="!p-2">
+                    <p class="!px-2">
                         @((MarkupString)c.P!)
                     </p>
                 }
@@ -119,6 +119,11 @@
         catch(Exception ex)
         {
             Layout?.ShowAlert(ex.Message, "error");
+        }
+        finally
+        {
+            Console.WriteLine("Load Chapter finally");
+            await Js.InvokeVoidAsync("reader.scrollToSelector", "article");
         }
     }
 
