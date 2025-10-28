@@ -15,7 +15,8 @@ declare global {
             clickElement: (element: HTMLElement | null) => void;
             removeDom: (selector: string) => void;
             CopyToclipboard: (text: string) => void;
-            scrollToSelector: (selector: string, behavior: ScrollBehavior ) => void
+            scrollToSelector: (selector: string, behavior: ScrollBehavior) => void;
+            focusInput: (selector: string) => void
         };
     }
 }
@@ -34,12 +35,22 @@ window.reader = {
         navigator.clipboard?.writeText(text).catch(err => console.error("Clipboard error:", err));
     },
     scrollToSelector: (selector: string, behavior: ScrollBehavior = "smooth") => {
-        const element = document.querySelector(selector);
-        if (element) {
-            element.scrollIntoView({ behavior, block: "start" });
-        } else {
-            window.scrollBy({ top: 0, behavior });
-        }
+        setTimeout(() => {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.scrollIntoView({ behavior, block: "center" });
+            } else {
+                window.scrollBy({ top: 0, behavior });
+            }
+        });
+    },
+    focusInput: (selector: string) => {
+        setTimeout(() => {
+            const element = document.querySelector(selector) as HTMLInputElement;
+            if (element) {
+                element.focus();
+            }
+        });
     }
 };
 

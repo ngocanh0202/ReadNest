@@ -166,3 +166,29 @@
         transform: translateY(0);
         background-color: rgba(59, 130, 246, 0.15);
     }
+
+
+
+.button-chapter {
+    animation: pop 0.25s ease-out;
+}
+
+
+@keyframes pop {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+        background-color: var(--btn-primary-border);
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+        background-color: var(--focus-shadow);
+    }
+
+    100% {
+        transform: scale(1);
+        background-color: var(--btn-primary-bg);
+    }
+}

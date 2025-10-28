@@ -102,8 +102,17 @@
                                     <div class="flex-1 min-w-0 striped-rows overflow-x-auto !px-2">
                                         @if (vol.Chapters?.Any() == true)
                                         {
-                                            @foreach (var chapter in vol.Chapters)
+                                            var isShowAll = showChapterToLast.TryGetValue(vol.Volumn?.Id!, out var showAll) && showAll;
+                                            var chapterLengths = isShowAll
+                                            ? vol.Chapters?.Count ?? 0
+                                            : Math.Min(vol.Chapters?.Count ?? 0, MAXCHAPTERSHOW);
+
+                                            @for (int i = 0; vol.Chapters != null && i < Math.Min(chapterLengths, vol.Chapters.Count); i++)
                                             {
+                                                var chapter = vol.Chapters[i];
+                                                if (chapter == null)
+                                                    continue;
+
                                                 <div class="flex items-center justify-between !py-3 gap-2">
                                                     <div class="flex gap-2 flex-1 items-center truncate">
                                                         @if (Utils.IsWithinLast7Days(chapter.UpdateDate))
@@ -111,12 +120,21 @@
                                                             <span class="text-red-400 text-sm font-semibold">New</span>
                                                         }
                                                         <a class="truncate text-base"
-                                                            @onclick="() => NavigateToChapter(chapter.Id)">
+                                                           @onclick="() => NavigateToChapter(chapter.Id)">
                                                             @chapter.Name
                                                         </a>
                                                     </div>
                                                     <p class="text-sm text-text-secondary whitespace-nowrap">@Utils.FormatDateTime(chapter.UpdateDate)</p>
                                                 </div>
+                                            }
+
+
+                                            @if (!showChapterToLast[vol.Volumn?.Id!] && vol?.Chapters?.Count > MAXCHAPTERSHOW)
+                                            {
+                                                <button @onclick="@(() => ShowMoreChapters(vol?.Volumn?.Id!))"
+                                                        class="btn-link">
+                                                    See more
+                                                </button>
                                             }
                                         }
                                         else
@@ -146,6 +164,9 @@
     [Parameter] public string Id { get; set; } = string.Empty;
     private DetailNovel? detailNovel;
     private bool isLoading = true;
+    private Dictionary<string, bool> showChapterToLast = new();
+
+    const int MAXCHAPTERSHOW = 6;
 
     protected override async Task OnInitializedAsync()
     {
@@ -164,6 +185,15 @@
             if (result != null && result.Success)
             {
                 detailNovel = result.Data;
+                var responseVolumnVsChapters = detailNovel?.VolumnVsChapters;
+                if (responseVolumnVsChapters is not null)
+                    foreach (var vvc in responseVolumnVsChapters)
+                    {
+                        if (vvc.Volumn?.Id != null && !showChapterToLast.ContainsKey(vvc.Volumn.Id))
+                        {
+                            showChapterToLast[vvc.Volumn.Id] = false;
+                        }
+                    }
             }
         }
         catch (Exception ex)
@@ -174,6 +204,14 @@
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    void ShowMoreChapters(string volumnId)
+    {
+        if (showChapterToLast.ContainsKey(volumnId))
+        {
+            showChapterToLast[volumnId] = true;
         }
     }
 

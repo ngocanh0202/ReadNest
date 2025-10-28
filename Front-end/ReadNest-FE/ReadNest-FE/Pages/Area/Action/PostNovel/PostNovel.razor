@@ -10,6 +10,7 @@
 @inject ReadNest_FE.Store.Store Store
 @inject ReadNest_FE.Router.Router Router
 @inject NavigationManager Navigation
+@layout MainLayoutForAuthor
 @inject ReadNest_FE.Services.UiEventService UiEventService
 @inject IJSRuntime JS
 @implements IDisposable
@@ -19,19 +20,6 @@
 <div class="container">
     <section class="novel-form-page py-10 px-4 md:px-6 lg:px-8">
         <div class="card !p-[1rem] shadow-xl !mb-[10px]" style="--bg-primary: var(--bg-primary); --border-color: var(--border-color);">
-            @if (!isNewNovel)
-            {
-                <div class="flex justify-end">
-                    <button class="btn-icon danger" @onclick="HandleConfirmDelete">
-                        <svg
-                               viewBox="0 0 24 24" 
-                               fill="currentColor" 
-                               class="w-5 h-5">
-                            <path d="M9 3a1 1 0 00-1 1v1H4a1 1 0 100 2h1v13a2 2 0 002 2h10a2 2 0 002-2V7h1a1 1 0 100-2h-4V4a1 1 0 00-1-1H9zm2 5a1 1 0 112 0v9a1 1 0 11-2 0V8zm-4 0a1 1 0 112 0v9a1 1 0 11-2 0V8zm8 0a1 1 0 112 0v9a1 1 0 11-2 0V8z" />
-                        </svg>
-                    </button>
-                </div> 
-            }
             <h1 class="text-2xl font-bold mb-6 text-center">
                 @(isNewNovel ? "Add New Novel" : "Update Novel")
             </h1>
@@ -113,16 +101,13 @@
                         <p class="validation-message text-red-600 text-sm mt-1" for="input-category"></p>
                     </div>
 
-                    <div class="button-add mt-8 flex justify-center lg:justify-end">
-                        <button class="btn-primary" @onclick="OnAddOrUpdateNovel">
-                            @(isNewNovel ? "Add novel" : "Update novel") 
-                        </button>
+                    <div class="chapters">
+                        <label class="block font-bold text-xl mb-3 text-text-primary" style="color: var(--text-primary);">Chapter</label>
+                        <AddChapters @bind-volumnVsChapters="detailNovel.VolumnVsChapters"
+                            novelId="detailNovel.Id"
+                        >
+                        </AddChapters>
                     </div>
-
-                    <AddChapters @bind-volumnVsChapters="detailNovel.VolumnVsChapters"
-                        novelId="detailNovel.Id"
-                    >
-                    </AddChapters>
 
                 </div>
             </div>
@@ -134,7 +119,7 @@
 
 @code {
     [Parameter] public string? Id { get; set; }
-    [CascadingParameter] private MainLayout? Layout { get; set; }
+    [CascadingParameter] private MainLayoutForAuthor? Layout { get; set; }
     // State Image
     private InputFile? fileInput;
     private bool isNewNovel;
@@ -240,18 +225,6 @@
         }
     }
 
-    private void OnNewMode()
-    {
-        isNewNovel = true;
-        detailNovel = new DetailNovel
-        {
-            Status = NovelStatus.INPROGRESS,
-            Summary = string.Empty
-        };
-        categorieCheckboxs.ForEach(c => c.IsChecked = false);
-        StateHasChanged();
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -289,8 +262,10 @@
 
             if (Layout != null)
             {
-                Layout.OnClickOnPostNovel -= OnNewMode;
-                Layout.OnClickOnPostNovel += OnNewMode;
+                Layout.OnClickOnSave -= OnAddOrUpdateNovel;
+                Layout.OnClickOnSave += OnAddOrUpdateNovel;
+                Layout.OnClickOnDelete -= HandleConfirmDelete;
+                Layout.OnClickOnDelete += HandleConfirmDelete;
             }
         }
     }
