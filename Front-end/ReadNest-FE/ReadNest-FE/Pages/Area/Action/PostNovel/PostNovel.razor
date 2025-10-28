@@ -424,6 +424,11 @@
     public void Dispose()
     {
         UiEventService.OnSelectNovelId -= HandleChangeId;
+        if(Layout != null)
+        {
+            Layout.OnClickOnDelete -= HandleConfirmDelete;
+            Layout.OnClickOnSave -= OnAddOrUpdateNovel;
+        }
     }
 
 }

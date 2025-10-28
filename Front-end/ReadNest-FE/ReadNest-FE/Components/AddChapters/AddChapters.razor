@@ -143,9 +143,16 @@
 
                                     @if (!showChapterToLast[volumnVsChapter.Volumn.Id] && volumnVsChapter.Chapters.Count > MAXCHAPTERSHOW)
                                     {
-                                        <button @onclick="@(() => ShowMoreChapters(volumnVsChapter.Volumn.Id))"
+                                        <button @onclick="@(() => SetShowMoreChapterInVolumn(volumnVsChapter.Volumn.Id, true))"
                                                 class="btn-link">
                                             See more
+                                        </button>
+                                    }
+                                    else if (showChapterToLast[volumnVsChapter.Volumn.Id] && volumnVsChapter.Chapters.Count > MAXCHAPTERSHOW)
+                                    {
+                                        <button @onclick="@(() => SetShowMoreChapterInVolumn(volumnVsChapter.Volumn.Id, false))"
+                                                class="btn-link">
+                                            See less
                                         </button>
                                     }
                                 }
@@ -237,11 +244,11 @@
         }
     }
 
-    void ShowMoreChapters(string volumnId)
+    void SetShowMoreChapterInVolumn(string volumnId, bool isShowMore)
     {
         if (showChapterToLast.ContainsKey(volumnId))
         {
-            showChapterToLast[volumnId] = true;
+            showChapterToLast[volumnId] = isShowMore;
         }
     }
 
@@ -308,7 +315,7 @@
                 VolumnId = volumnId
             });
             newChapterNames[volumnId] = string.Empty;
-            ShowMoreChapters(volumnId);
+            SetShowMoreChapterInVolumn(volumnId, true);
             Console.WriteLine($"chapter-{newId}");
             await JS.InvokeVoidAsync("reader.scrollToSelector", $"#chapter-{newId}");
             await NotifyChanged();
