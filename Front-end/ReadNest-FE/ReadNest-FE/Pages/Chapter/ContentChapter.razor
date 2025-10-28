@@ -62,7 +62,7 @@
     protected override async Task OnInitializedAsync()
     {
         await OnLoadChapter();
-        await Js.InvokeVoidAsync("reader.scrollToSelector", "article");
+        await Js.InvokeVoidAsync("reader.scrollToSelector", ".reader-chapter");
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -124,7 +124,7 @@
         finally
         {
             Console.WriteLine("Load Chapter finally");
-            await Js.InvokeVoidAsync("reader.scrollToSelector", "article");
+            await Js.InvokeVoidAsync("reader.scrollToSelector", ".reader-chapter");
         }
     }
 

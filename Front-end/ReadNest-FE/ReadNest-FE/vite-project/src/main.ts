@@ -1,12 +1,13 @@
-import "./style.css";
+﻿import "./style.css";
 import "./nav.ts";
 import "./toggle.theme.ts"
 import "./validation.ts"
 import "./readerKeyListener.ts"
 import "./editor.ts"
 import $ from "jquery";
+
 export function testViteLibrary() {
-  console.log("Vite library successfully imported!");
+    console.log("Vite library successfully imported!");
 }
 
 declare global {
@@ -16,7 +17,8 @@ declare global {
             removeDom: (selector: string) => void;
             CopyToclipboard: (text: string) => void;
             scrollToSelector: (selector: string, behavior: ScrollBehavior) => void;
-            focusInput: (selector: string) => void
+            focusInput: (selector: string) => void;
+            scrollToAHeadPage: (distance?: number, behavior?: ScrollBehavior) => void;
         };
     }
 }
@@ -50,10 +52,14 @@ window.reader = {
             if (element) {
                 element.focus();
             }
+        }, 100);
+    },
+    scrollToAHeadPage: (distance: number = window.innerHeight, behavior: ScrollBehavior = "smooth") => {
+        window.scrollBy({
+            top: distance,
+            behavior
         });
     }
 };
-
-
 
 export { $ };

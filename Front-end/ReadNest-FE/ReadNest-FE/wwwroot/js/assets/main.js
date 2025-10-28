@@ -11429,6 +11429,12 @@ window.reader = {
     setTimeout(() => {
       const t = document.querySelector(i);
       t && t.focus();
+    }, 100);
+  },
+  scrollToAHeadPage: (i = window.innerHeight, t = "smooth") => {
+    window.scrollBy({
+      top: i,
+      behavior: t
     });
   }
 };
