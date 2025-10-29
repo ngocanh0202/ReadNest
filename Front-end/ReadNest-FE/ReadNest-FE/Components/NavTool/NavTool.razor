@@ -5,7 +5,6 @@
 @inject ReadNest_FE.Router.Router Router
 @inject ReadNest_FE.Store.Store Store
 @inject ReadNest_FE.Interfaces.IAuthService AuthService
-@implements IDisposable
 
 <nav class="main-nav @(isNavVisible ? "visible" : "hidden")">
     <div class="nav-container">
@@ -148,9 +147,6 @@
         {
             if (JS != null)
             {
-                await JS.InvokeVoidAsync("initNavScroll",
-                    DotNetObjectReference.Create(this));
-
                 isDarkMode = await JS.InvokeAsync<bool>("themeToggle.initialize");
                 StateHasChanged();
             }
@@ -224,14 +220,6 @@
     {
         isDarkMode = !isDarkMode;
         await JS.InvokeVoidAsync("themeToggle.setTheme", isDarkMode ? "dark" : "light");
-    }
-
-    public void Dispose()
-    {
-        if (JS != null)
-        {
-            _ = JS.InvokeVoidAsync("cleanupNavScroll");
-        }
     }
 
     public async void Logout()

@@ -49,14 +49,14 @@
                     <p class="validation-message text-red-600 text-sm mt-1" for="@($"input-volumn-{volumnVsChapter.Volumn!.Id}")"></p>
                     @if (volumnVsChapter.IsExpanded == true || volumnVsChapter.IsExpanded == null)
                     {
-                        <div style="border-color:var(--bg-secondary) " class="rounded-xl !border flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 pl-0 sm:pl-2 !mt-3 sticky top-[80px]">
+                        <div style="background-color: var(--bg-secondary);" class="rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4 pl-0 sm:pl-2 !mt-3 sticky top-[80px]">
                             <input type="text"
                                    @bind="newChapterNames[volumnVsChapter.Volumn.Id]"
                                    placeholder="Enter chapter name for @volumnVsChapter.Volumn!.Name"
-                                   class="input flex-1 w-full sm:w-auto" />
+                                   class="input !rounded-xl flex-1 w-full sm:w-auto !pr-[40px]" />
 
                             <button @onclick="@(() => AddChapter(volumnVsChapter.Volumn.Id))"
-                                    class="btn-icon w-full sm:w-auto">
+                                    class="btn-icon absolute right-0 top-[7px]">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M12 4v16m8-8H4" />
@@ -90,7 +90,7 @@
                                 }
                             </div>
 
-                            <div class="flex-1 min-w-0 striped-rows overflow-x-auto">
+                            <div class="flex-1 min-w-0 overflow-x-auto">
                                 @if (volumnVsChapter.Chapters?.Any() == true)
                                 {
                                     var chapterLengths = !showChapterToLast[volumnVsChapter.Volumn.Id] ?

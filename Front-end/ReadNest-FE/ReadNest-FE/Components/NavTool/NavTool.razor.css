@@ -327,11 +327,6 @@
         display: block;
     }
 
-    .nav-search {
-        flex: 1;
-        max-width: none;
-    }
-
     .nav-container {
         gap: 1rem;
         padding: 0.875rem 1rem;
