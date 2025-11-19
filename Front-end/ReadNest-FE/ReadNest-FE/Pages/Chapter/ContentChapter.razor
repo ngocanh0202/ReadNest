@@ -8,6 +8,7 @@
 @inject ReadNest_FE.Store.Store Store
 @inject IJSRuntime Js
 @inject ReadNest_FE.Interfaces.IChapterService ChapterService
+@inject ReadNest_FE.Interfaces.IBookmarkService BookmarkService
 @inject ReadNest_FE.Interfaces.IContentService ContentService
 @inject ReadNest_FE.Interfaces.IReadingHistoryService ReadingHistoryService
 @page "/chapter/{Id}"
@@ -38,9 +39,22 @@
                 }
                 else
                 {
-                    <p class="!px-2">
-                        @((MarkupString)c.P!)
-                    </p>
+                    <div class="relative content">
+                        <p class="!px-2" @onclick="() => ShowBtnForContent(c.Id)">
+                            @((MarkupString)c.P!)
+                        </p>
+
+                        @if (visibleContentId == c.Id)
+                        {
+                            <button class="btn-icon absolute top-[-30px] right-0 text-xl"
+                                    @onclick="@(async (e) => await OnBookmarkClick(c))"
+                                    title="Add bookmark">
+                                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 384 512" height="1em" width="1em">
+                                    <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path>
+                                </svg>
+                            </button>
+                        }
+                    </div>
                 }
             }
         }
@@ -57,12 +71,12 @@
     ChapterOverview? currentChapter;
     string? lenghWords;
     string? timeAgo;
+    private string? visibleContentId;
     List<ContentDto>? Contents { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await OnLoadChapter();
-        await Js.InvokeVoidAsync("reader.scrollToSelector", ".reader-chapter");
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -77,6 +91,43 @@
                     Layout.OnNotifyChangeChapter += OnChangeChapter;
                 }
             }
+        }
+    }
+
+    private void ShowBtnForContent(string? contentId)
+    {
+        if (visibleContentId == contentId)
+            visibleContentId = null;
+        else
+            visibleContentId = contentId;
+    }
+
+    private async Task OnBookmarkClick(ContentDto content)
+    {
+        try
+        {
+            var bookmark = new Bookmark
+            {
+                NovelId = currentChapter?.NovelId,
+                ChapterId = Id,
+                ContentText = content.P,     
+            };
+
+            var result = await BookmarkService.Post(bookmark);
+
+            if (result != null && result.Success)
+            {
+                Layout?.ShowAlert("Bookmark saved.", "success");
+                visibleContentId = null;
+            }
+            else
+            {
+                Layout?.ShowAlert(result?.Message ?? "Failed to save bookmark.", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Layout?.ShowAlert(ex.Message, "error");
         }
     }
 
@@ -123,8 +174,16 @@
         }
         finally
         {
-            Console.WriteLine("Load Chapter finally");
-            await Js.InvokeVoidAsync("reader.scrollToSelector", ".reader-chapter");
+            if (!string.IsNullOrEmpty(Store.ContentIdValue))
+            {
+                await Task.Delay(50);
+                await Js.InvokeVoidAsync("reader.scrollToText", Store.ContentIdValue, ".content");
+                Store.ContentIdValue = null;
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("reader.scrollToSelector", ".reader-chapter");
+            }
         }
     }
 

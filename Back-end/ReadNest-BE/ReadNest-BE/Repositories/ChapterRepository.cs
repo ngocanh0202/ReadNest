@@ -13,11 +13,13 @@ namespace ReadNest_BE.Repositories
     public class ChapterRepository : ExtendRepository<Chapter>, IChapterRepository
     {
         IContentRepository _contentRepository;
+        IBookmarkRepository _bookmarkRepository;
         IHttpContextAccessor _httpContextAccessor;
-        public ChapterRepository(IHttpContextAccessor httpContextAccessor, IContentRepository contentRepository, AppDbContext appDbContext, JwtService jwtService) : base(appDbContext, jwtService)
+        public ChapterRepository(IHttpContextAccessor httpContextAccessor, IContentRepository contentRepository, AppDbContext appDbContext, JwtService jwtService, IBookmarkRepository bookmarkRepository) : base(appDbContext, jwtService)
         {
             _contentRepository = contentRepository;
             _httpContextAccessor = httpContextAccessor;
+            _bookmarkRepository = bookmarkRepository;
         }
 
         public override async Task<bool> DeleteRange(List<Chapter> entities)
@@ -29,6 +31,7 @@ namespace ReadNest_BE.Repositories
                 foreach (var entity in entities)
                 {
                     await _contentRepository.DeleteByChapterId(entity.Id);
+                    await _bookmarkRepository.DeleteBookmark(entity.Id);
                     _dbSet.Remove(entity);
                 }
                 var result = await SaveChange();

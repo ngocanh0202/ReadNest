@@ -9,7 +9,6 @@ namespace ReadNest_BE.Repositories
 {
     public class ContentRepository : ExtendRepository<Content>, IContentRepository
     {
-
         public ContentRepository(AppDbContext appDbContext, JwtService jwtService) : base(appDbContext, jwtService)
         {
         }

@@ -7,6 +7,7 @@ namespace ReadNest_FE.Store
         public string? RefreshToken { get; set; }
         public string? UserName { get; set; }
         public string? Host { get; set; }
+        public string? ContentIdValue { get; set; }
         public bool? HasContributePermission { get; set; }
         public bool IsModeReader { get; set; } = false;
         public List<ReadingHistoryDto>? readingHistories { get; set; }

@@ -16,6 +16,7 @@
         NOVEL,
         UPDATECHAPTER,
         HISTORY,
+        BOOKMARK,
         NONE
     }
 }

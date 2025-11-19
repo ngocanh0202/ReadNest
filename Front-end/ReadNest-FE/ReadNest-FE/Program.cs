@@ -18,6 +18,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddScoped<UiEventService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IChapterService, ChapterService>();
+builder.Services.AddScoped<IBookmarkService, BookmarkService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IContentService, ContentService>();
 builder.Services.AddScoped<IGeminiService, GeminiService>();

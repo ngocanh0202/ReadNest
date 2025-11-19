@@ -23,6 +23,7 @@ namespace ReadNest_FE.Dictionaries
             { RouterType.FILTER, $"{Base}filter" },
             { RouterType.FILTERBYCATEGORY, $"{Base}filter?CategoryName={{name}}" },
             { RouterType.HISTORY, $"{Base}History" },
+            { RouterType.BOOKMARK, $"{Base}Bookmark" },
             { RouterType.CHAPTER, $"{Base}chapter/{{id}}" },
             { RouterType.NOVEL, $"{Base}novel/{{id}}" },
             { RouterType.POSTNOVEL, $"{Base}action/post-novel" },

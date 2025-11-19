@@ -8,6 +8,7 @@ namespace ReadNest_BE.Infrastructure
     {
         public DbSet<Volumn> Volumns { get; set; }
         public DbSet<ReadingHistory> ReadingHistorys { get; set; }
+        public DbSet<Bookmark> Bookmarks { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<CategoryNovel> CategorieNovels { get; set; }

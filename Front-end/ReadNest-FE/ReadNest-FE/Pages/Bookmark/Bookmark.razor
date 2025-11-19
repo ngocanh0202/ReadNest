@@ -1,0 +1,154 @@
+﻿@page "/Bookmark"
+@inject ReadNest_FE.Store.Store Store
+@inject ReadNest_FE.Router.Router Router
+@inject ReadNest_FE.Interfaces.IBookmarkService BookmarkService
+@inject NavigationManager NavManager
+@using ReadNest_Models
+
+<PageTitle>Bookmarks</PageTitle>
+
+<div class="container !px-2 mx-auto">
+    <div class="!my-[2rem] flex items-center gap-2 font-bold">
+        <button class="btn-icon danger !text-white" disabled>
+            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 384 512" height="1em" width="1em"> <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path> </svg>
+        </button>
+        <p class="underline !text-lg !flex !flex-col !gap-1">
+            <div>Bookmarks</div>
+            <div class="!h-[5px] !w-full !bg-red-300"></div>
+        </p>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="py-8 text-center text-lg">Loading bookmarks...</div>
+    }
+    else if (novels is null || !novels.Any())
+    {
+        <div class="py-8 text-center text-lg">No bookmarks found. Start reading and add some!</div>
+    }
+    else
+    {
+        <div class="flex flex-col gap-4">
+            @foreach (var novel in novels)
+            {
+                <div class="rounded-xl shadow-lg border overflow-hidden">
+
+                    <div class="flex gap-4 p-3 items-center">
+                        <div class="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center border">
+                            @if (!string.IsNullOrEmpty(novel.NovelImageUrl))
+                            {
+                                <img src="@novel.NovelImageUrl" alt="@novel.NovelName" class="w-full h-full object-cover" />
+                            }
+                            else
+                            {
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                </svg>
+                            }
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <a href="@Router.NovelUrl.Replace("{id}", novel.NovelId)" class="text-lg font-semibold block overflow-hidden text-ellipsis whitespace-nowrap">
+                                @novel.NovelName
+                            </a>
+                            <div class="text-sm mt-1">
+                                @($"{novel.Chapters?.Count ?? 0} bookmarked chapter(s)")
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (novel.Chapters?.Any() ?? false)
+                    {
+                        <div class="divide-y">
+                            @foreach (var ch in novel.Chapters)
+                            {
+                                <div class="cursor-pointer" @onclick="() => ToggleChapter(novel.NovelId, ch.ChapterId)">
+                                    <div class="flex justify-between items-center p-2 transition-colors">
+                                        <span class="text-xl font-medium">@ch.ChapterName</span>
+                                        <svg class="w-4 h-4 transform @(IsChapterOpen(novel.NovelId, ch.ChapterId) ? "rotate-180" : "") transition-transform" viewBox="0 0 24 24" fill="none">
+                                            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+
+                                    @if (IsChapterOpen(novel.NovelId, ch.ChapterId))
+                                    {
+                                        <ol class="p-2! space-y-1!">
+                                            @foreach (var ct in ch.ContentTexts)
+                                            {
+                                                <li class="p-1 rounded-md"
+                                                    @onclick="() => RedirectToChapter(ct, ch.ChapterId!)">
+                                                    @Truncate(ct, 100)
+                                                </li>
+                                                <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+                                            }
+                                        </ol>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-2 text-sm border-t">No chapters bookmarked.</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+
+
+@code {
+    private List<BookmarkNovel>? novels;
+    private HashSet<string> openChapters = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBookmarks();
+    }
+
+    private async Task LoadBookmarks()
+    {
+        isLoading = true;
+        try
+        {
+            var resp = await BookmarkService.Get();
+            novels = resp?.Data ?? new List<BookmarkNovel>();
+        }
+        catch
+        {
+            novels = new List<BookmarkNovel>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleChapter(string? novelId, string? chapterId)
+    {
+        if (novelId == null || chapterId == null) return;
+        var key = $"{novelId}:{chapterId}";
+        if (openChapters.Contains(key)) openChapters.Remove(key);
+        else openChapters.Add(key);
+    }
+
+    private bool IsChapterOpen(string? novelId, string? chapterId)
+        => openChapters.Contains($"{novelId}:{chapterId}");
+
+    private void RedirectToChapter(string contentIdValue, string chapterId)
+    {
+        Store.ContentIdValue = contentIdValue;
+        NavManager.NavigateTo(Router.ChapterUrl!.Replace("{id}", chapterId));
+    }
+
+    private string Truncate(string? s, int max)
+    {
+        if (string.IsNullOrEmpty(s)) return string.Empty;
+        return s.Length <= max ? s : s.Substring(0, max).TrimEnd() + "...";
+    }
+}

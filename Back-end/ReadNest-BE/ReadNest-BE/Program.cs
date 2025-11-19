@@ -186,6 +186,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IBookmarkRepository, BookmarkRepository>();
 builder.Services.AddScoped<IImageRepository, ImageRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();

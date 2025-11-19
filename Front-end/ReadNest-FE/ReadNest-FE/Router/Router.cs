@@ -17,6 +17,7 @@ namespace ReadNest_FE.Router
         public readonly string FilterUrl = RouterManager.GetRouter(RouterType.FILTER)!;
         public readonly string FilterCategory = RouterManager.GetRouter(RouterType.FILTERBYCATEGORY)!;
         public readonly string HistoryUrl = RouterManager.GetRouter(RouterType.HISTORY)!;
+        public readonly string BookmarkUrl = RouterManager.GetRouter(RouterType.BOOKMARK)!;
         public readonly string None = RouterManager.GetRouter(RouterType.NONE)!;
 
         public string NovelUrl => _store.IsModeReader

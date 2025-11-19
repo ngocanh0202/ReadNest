@@ -36,7 +36,7 @@
                class="nav-link @(Navigation.Uri.Contains(Router.ImagesUrl!, StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                 Images
             </a>
-            <a href="#" class="nav-link @(Navigation.Uri.Contains(Router.None!, StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+            <a href="@Router.BookmarkUrl" class="nav-link @(Navigation.Uri.Contains(Router.None!, StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                 Bookmarks
             </a>
             <div class="theme-toggle-wrapper">
@@ -93,7 +93,7 @@
            class="nav-link @(Navigation.Uri.Contains(Router.ImagesUrl!, StringComparison.OrdinalIgnoreCase) ? "active" : "")">
             Images
         </a>
-        <a @onclick="ToggleMobileMenu" href="#" class="nav-link @(Navigation.Uri.Contains(Router.None!, StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+        <a @onclick="ToggleMobileMenu" href="@Router.BookmarkUrl" class="nav-link @(Navigation.Uri.Contains(Router.None!, StringComparison.OrdinalIgnoreCase) ? "active" : "")">
             Bookmarks
         </a>
 
