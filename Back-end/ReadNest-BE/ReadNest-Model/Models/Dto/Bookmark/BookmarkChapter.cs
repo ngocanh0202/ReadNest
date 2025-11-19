@@ -10,6 +10,12 @@ namespace ReadNest_Models
     {
         public string? ChapterId { get; set; }
         public string? ChapterName { get; set; }
-        public List<string> ContentTexts { get; set; } = new();
+        public List<BookmarkContent> ContentTexts { get; set; } = new();
+    }
+
+    public class BookmarkContent
+    {
+        public string? BookmarkId { get; set; }
+        public string? ContentText { get; set; }
     }
 }

@@ -3,6 +3,7 @@
 @inject ReadNest_FE.Router.Router Router
 @inject ReadNest_FE.Interfaces.IBookmarkService BookmarkService
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 @using ReadNest_Models
 
 <PageTitle>Bookmarks</PageTitle>
@@ -63,26 +64,41 @@
                         <div class="divide-y">
                             @foreach (var ch in novel.Chapters)
                             {
-                                <div class="cursor-pointer" @onclick="() => ToggleChapter(novel.NovelId, ch.ChapterId)">
+                                <div class="cursor-pointer">
                                     <div class="flex justify-between items-center p-2 transition-colors">
                                         <span class="text-xl font-medium">@ch.ChapterName</span>
-                                        <svg class="w-4 h-4 transform @(IsChapterOpen(novel.NovelId, ch.ChapterId) ? "rotate-180" : "") transition-transform" viewBox="0 0 24 24" fill="none">
-                                            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
+                                        <button class="btn-icon" @onclick="() => ToggleChapter(novel.NovelId, ch.ChapterId)" >
+                                            <svg class="w-4 h-4 transform @(IsChapterOpen(novel.NovelId, ch.ChapterId) ? "rotate-180" : "") transition-transform" viewBox="0 0 24 24" fill="none">
+                                                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                        </button>
                                     </div>
 
                                     @if (IsChapterOpen(novel.NovelId, ch.ChapterId))
                                     {
-                                        <ol class="p-2! space-y-1!">
+                                        <div class="!p-2 !space-y-3">
                                             @foreach (var ct in ch.ContentTexts)
                                             {
-                                                <li class="p-1 rounded-md"
-                                                    @onclick="() => RedirectToChapter(ct, ch.ChapterId!)">
-                                                    @Truncate(ct, 100)
-                                                </li>
-                                                <hr class="!my-3 !border-[color:var(--bg-secondary)]">
+                                                <div class="!p-1 !rounded-md !flex !justify-between !items-center !group !border-b !border-[color:var(--bg-secondary)] !pb-3">
+
+                                                    <span class="!flex-1 !cursor-pointer"
+                                                          @onclick="() => RedirectToChapter(ct.ContentText!, ch.ChapterId!)">
+                                                        @Truncate(ct.ContentText, 100)
+                                                    </span>
+
+                                                    <button class="!opacity-60 group-hover:!opacity-100 !transition !ml-3"
+                                                            @onclick="(e) => DeleteBookmark(ct.BookmarkId!)">
+                                                        <svg stroke="currentColor" fill="currentColor" stroke-width="0"
+                                                             viewBox="0 0 448 512" height="1.2em" width="1.2em">
+                                                            <path d="M135.2 17.7L121 32H32C14.3 32 0 46.3 0 64V96H448V64c0-17.7-14.3-32-32-32H327L312.8 17.7C306.6 11.3
+                                                298.1 8 289.4 8H158.6c-8.7 0-17.2 3.3-23.4 9.7zM32 128L53.2 467c1.6 25.3 22.6 45 47.9
+                                                45H346.9c25.3 0 46.3-19.7 47.9-45L416 128H32z"></path>
+                                                        </svg>
+                                                    </button>
+
+                                                </div>
                                             }
-                                        </ol>
+                                        </div>
                                     }
                                 </div>
                             }
@@ -101,6 +117,7 @@
 
 
 @code {
+    [CascadingParameter] MainLayout? layout { get; set; }
     private List<BookmarkNovel>? novels;
     private HashSet<string> openChapters = new();
     private bool isLoading = true;
@@ -136,6 +153,22 @@
         if (openChapters.Contains(key)) openChapters.Remove(key);
         else openChapters.Add(key);
     }
+
+    private void DeleteBookmark(string bookmarkId)
+    {
+        layout?.ShowModal(
+            "Are you sure to delete this bookmark?",
+            null,
+            EventCallback.Factory.Create(this, async () =>
+            {
+                await BookmarkService.DeleteValue(bookmarkId);
+                await LoadBookmarks();
+            }),
+            null,
+            "Delete"
+        );
+    }
+
 
     private bool IsChapterOpen(string? novelId, string? chapterId)
         => openChapters.Contains($"{novelId}:{chapterId}");

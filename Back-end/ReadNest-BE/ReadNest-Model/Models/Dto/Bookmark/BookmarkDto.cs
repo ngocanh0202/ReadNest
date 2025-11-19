@@ -8,6 +8,7 @@ namespace ReadNest_Models
 {
     public class BookmarkDto
     {
+        public string? Id { get; set; }
         public string? NovelId { get; set; }
         public string? NovelName { get; set; }
         public string? NovelImageUrl { get; set; }

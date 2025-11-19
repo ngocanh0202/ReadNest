@@ -43,6 +43,7 @@ namespace ReadNest_BE.Repositories
         {
             var sql = @"
                 SELECT
+                    b.Id,
                     b.NovelId AS NovelId,
                     n.Name AS NovelName,
                     i.ImagePath AS NovelImageUrl,
