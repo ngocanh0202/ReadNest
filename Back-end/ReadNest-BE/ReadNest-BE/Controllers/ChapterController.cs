@@ -44,7 +44,7 @@ namespace ReadNest_BE.Controllers
 
         [HttpPost("mutiple/chapter/{chapterId}/contents")]
         [EnableRateLimiting("upsert")]
-        public async Task<IActionResult> PostMutiple([FromRoute] string chapterId, [FromBody] List<ContentDto> contents)
+        public async Task<IActionResult> PostMutiple([FromRoute] string chapterId, [FromBody] List<Content> contents)
         {
             var entity = await _repository.GetById(chapterId);
             if (entity == null)
@@ -60,9 +60,9 @@ namespace ReadNest_BE.Controllers
                 List<Content> newContent = contents.Adapt<List<Content>>();
                 var updatedEntity = PrepareEntityForUpdate(entity, entity, userId);
                 var createdContents = await _contentRepository.CreateOrUpdateMany(newContent);
-                var responeseContents = createdContents.Adapt<List<ContentDto>>();
+                var responeseContents = createdContents.Adapt<List<Content>>();
                 await ((IChapterRepository)_repository).Update(updatedEntity);
-                return Ok(new Response<List<ContentDto>>(responeseContents, "Update contents for chapter successfully", true));
+                return Ok(new Response<List<Content>>(responeseContents, "Update contents for chapter successfully", true));
             }
             catch (Exception ex)
             {

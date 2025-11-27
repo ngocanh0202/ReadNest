@@ -144,6 +144,8 @@ namespace ReadNest_BE.Repositories
 
                     SELECT 
                             c.Id, 
+                            c.CreateDate, 
+                            c.UpdateDate,
                             c.P, 
                             i.Id as ImageId,
                             i.ImagePath AS ImageUrl, 
@@ -162,7 +164,7 @@ namespace ReadNest_BE.Repositories
                 using (var multi = await connection.QueryMultipleAsync(sql, new { ChapterId = chapterId }))
                 {
                     var chapters = (await multi.ReadAsync<ChapterOverview>()).ToList();
-                    var contents = (await multi.ReadAsync<ContentDto>()).ToList();
+                    var contents = (await multi.ReadAsync<Content>()).ToList();
 
                     var current = chapters.FirstOrDefault(c => c.ChapterType == "Current");
                     if (current == null)
@@ -182,7 +184,7 @@ namespace ReadNest_BE.Repositories
                         }
                     }
 
-                    detailChapter.Contents = contents ?? new List<ContentDto>();
+                    detailChapter.Contents = contents ?? new List<Content>();
 
                     return detailChapter;
                 }

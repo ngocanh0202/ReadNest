@@ -15,7 +15,7 @@ namespace ReadNest_FE.Services.Features
 
         }
 
-        public async Task<Response<List<ContentDto>>> GetMutipleByChapterId(string chapterId)
+        public async Task<Response<List<Content>>> GetMutipleByChapterId(string chapterId)
         {
             _uiEventService.SetLoading(true);
             try
@@ -34,7 +34,7 @@ namespace ReadNest_FE.Services.Features
 
                 if (response.IsSuccessStatusCode)
                 {
-                    Response<List<ContentDto>>? data = await response.Content.ReadFromJsonAsync<Response<List<ContentDto>>>();
+                    Response<List<Content>>? data = await response.Content.ReadFromJsonAsync<Response<List<Content>>>();
                     return data!;
                 }
                 else

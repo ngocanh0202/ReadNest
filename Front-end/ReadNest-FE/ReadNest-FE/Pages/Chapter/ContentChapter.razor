@@ -40,7 +40,12 @@
                 else
                 {
                     <div class="relative content">
-                        <p class="!px-2" @onclick="() => ShowBtnForContent(c.Id)">
+                        <p class="!px-2" 
+                           @onclick="() => ShowBtnForContent(c.Id)"
+                           @onmousedown="() => StartPress(c)"
+                           @onmouseup="EndPress"
+                           @ontouchstart="() => StartPress(c)"
+                           @ontouchend="EndPress">
                             @((MarkupString)c.P!)
                         </p>
 
@@ -72,7 +77,11 @@
     string? lenghWords;
     string? timeAgo;
     private string? visibleContentId;
-    List<ContentDto>? Contents { get; set; }
+    List<Content>? Contents { get; set; }
+
+    private System.Timers.Timer? pressTimer;
+    private readonly double holdTime = 450;
+    private Content? editingContent;
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,7 +111,7 @@
             visibleContentId = contentId;
     }
 
-    private async Task OnBookmarkClick(ContentDto content)
+    private async Task OnBookmarkClick(Content content)
     {
         try
         {
@@ -215,5 +224,80 @@
     {
         Id = newChapterId;
         await OnLoadChapter();
+    }
+
+    private void StartPress(Content p)
+    {
+        if (Store.HasContributePermission == null || !Store.HasContributePermission.Value)
+            return;
+        pressTimer?.Stop();
+
+        pressTimer = new System.Timers.Timer(holdTime);
+        pressTimer.Elapsed += (_, __) =>
+        {
+            InvokeAsync(() => ShowModal(p));
+            pressTimer?.Stop();
+        };
+        pressTimer.AutoReset = false;
+        pressTimer.Start();
+    }
+
+    private void EndPress()
+    {
+        pressTimer?.Stop();
+    }
+
+    private void ShowModal(Content content)
+    {
+        if (Store.HasContributePermission == null || !Store.HasContributePermission.Value)
+            return;
+        editingContent = content;
+        string newP = content.P ?? string.Empty;
+        Layout?.ShowModal(
+            null!,
+            @<div class="space-y-4">
+                <Editor @bind-content="newP"></Editor>
+            </div>
+    ,
+            EventCallback.Factory.Create(this, () => HandleToUpdateContent(newP)),
+            confirmText: "Update content",
+            showCancel: false,
+            showOk: true
+        );
+    }
+
+    private async Task HandleToUpdateContent(string? newP)
+    {
+        if (string.IsNullOrWhiteSpace(newP))
+        {
+            Layout?.ShowAlert("Content cannot be empty.", "error");
+            return;
+        }
+
+        if (editingContent != null)
+        {
+            editingContent.P = newP;
+
+            var contentInList = Contents?.FirstOrDefault(c => c.Id == editingContent.Id);
+            if (contentInList != null)
+            {
+                contentInList.P = newP;
+            }
+
+            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
+            await ContentService.PutValue(contentInList!);
+
+            editingContent = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        pressTimer?.Dispose();
+        if (Layout != null)
+        {
+            Layout.OnNotifyChangeChapter -= OnChangeChapter;
+        }
     }
 }

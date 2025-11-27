@@ -52,7 +52,7 @@ namespace ReadNest_FE.Services.Features
             }
         }
 
-        public async Task<Response<List<ContentDto>>> PostMutiple(List<ContentDto> contents, string chapterId)
+        public async Task<Response<List<Content>>> PostMutiple(List<Content> contents, string chapterId)
         {
             _uiEventService.SetLoading(true);
             try
@@ -71,7 +71,7 @@ namespace ReadNest_FE.Services.Features
 
                 if (response.IsSuccessStatusCode)
                 {
-                    Response<List<ContentDto>>? data = await response.Content.ReadFromJsonAsync<Response<List<ContentDto>>>();
+                    Response<List<Content>>? data = await response.Content.ReadFromJsonAsync<Response<List<Content>>>();
                     _uiEventService.ShowAlert(data?.Message!, "success");
                     return data!;
                 }

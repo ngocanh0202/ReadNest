@@ -19,7 +19,7 @@ namespace ReadNest_BE.Controllers
         }
 
         [HttpGet("mutiple/{chapterId}")]
-        public async Task<ActionResult<Response<List<ContentDto>>>> GetMutiple([FromRoute] string chapterId)
+        public async Task<ActionResult<Response<List<Content>>>> GetMutiple([FromRoute] string chapterId)
         {
             if (!CanRead(out var errorMessage))
                 return Unauthorized(errorMessage);
@@ -27,11 +27,11 @@ namespace ReadNest_BE.Controllers
             {
                 var contents = await ((IContentRepository)_repository).GetContentsByChapterId(chapterId);
 
-                List<ContentDto> result = new List<ContentDto>();
+                List<Content> result = new List<Content>();
 
                 foreach (var c in contents)
                 {
-                    var response = c.Adapt<ContentDto>();
+                    var response = c.Adapt<Content>();
 
                     if (!string.IsNullOrWhiteSpace(c.ImageId))
                     {
@@ -45,7 +45,7 @@ namespace ReadNest_BE.Controllers
                     result.Add(response);
                 }
 
-                return Ok(new Response<List<ContentDto>>(result, "Get contents for chapter successfully", true));
+                return Ok(new Response<List<Content>>(result, "Get contents for chapter successfully", true));
             }
             catch (Exception ex)
             {

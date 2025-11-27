@@ -25,8 +25,8 @@
             }
             await JS.InvokeVoidAsync("reader.removeDom", ".ql-toolbar.ql-snow");
             await JS.InvokeVoidAsync("editor.init", $"#editor-container-{id}", dotNetRef);
-            await JS.InvokeVoidAsync("editor.setContent", $"#editor-container-{id}", content);
         }
+        await JS.InvokeVoidAsync("editor.setContent", $"#editor-container-{id}", content);
     }
 
 

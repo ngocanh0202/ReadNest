@@ -7,12 +7,12 @@ namespace ReadNest_FE.Utils
 {
     public class Utils
     {
-        public static List<ContentDto> ParseEditorContentToList(string htmlContent, string chapterId)
+        public static List<Content> ParseEditorContentToList(string htmlContent, string chapterId)
         {
             if (string.IsNullOrWhiteSpace(htmlContent))
-                return new List<ContentDto>();
+                return new List<Content>();
 
-            var contentList = new List<ContentDto>();
+            var contentList = new List<Content>();
             var pRegex = new Regex(@"<p[^>]*>(.*?)</p>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
             var matches = pRegex.Matches(htmlContent);
             int order = 0;
@@ -37,7 +37,7 @@ namespace ReadNest_FE.Utils
 
                     if (!string.IsNullOrWhiteSpace(cleanedContent))
                     {
-                        contentList.Add(new ContentDto
+                        contentList.Add(new Content
                         {
                             Order = order++,
                             P = cleanedContent,
@@ -90,7 +90,7 @@ namespace ReadNest_FE.Utils
 
                     foreach (var part in parts)
                     {
-                        var content = new ContentDto
+                        var content = new Content
                         {
                             Order = order++,
                             ChapterId = chapterId
@@ -121,7 +121,7 @@ namespace ReadNest_FE.Utils
             return contentList;
         }
 
-        public static string ConvertContentListToHtml(List<ContentDto> contentList)
+        public static string ConvertContentListToHtml(List<Content> contentList)
         {
             if (contentList == null || !contentList.Any())
                 return "";
@@ -182,7 +182,7 @@ namespace ReadNest_FE.Utils
             int years = (int)(timeSpan.TotalDays / 365);
             return $"{years} year{(years >= 2 ? "s" : "")} ago";
         }
-        public static string GetLengthWords(List<ContentDto> contents)
+        public static string GetLengthWords(List<Content> contents)
         {
             if (contents == null || contents.Count == 0)
                 return "0";

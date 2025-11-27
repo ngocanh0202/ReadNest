@@ -9,7 +9,7 @@
 
 @code {
     [CascadingParameter] private LayoutForAuthor? Layout { get; set; }
-    [Parameter] public ContentDto? Content { get; set; }
+    [Parameter] public Content? Content { get; set; }
 
     private System.Timers.Timer? pressTimer;
     private readonly double holdTime = 450;

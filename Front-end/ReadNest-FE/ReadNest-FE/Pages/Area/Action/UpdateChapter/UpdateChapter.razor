@@ -115,7 +115,7 @@
     {
         try
         {
-            List<ContentDto>? contentDtos = Utils.ParseEditorContentToList(Content!, Id!);
+            List<Content>? contentDtos = Utils.ParseEditorContentToList(Content!, Id!);
             await ChapterService.PostMutiple(contentDtos, Id!);
             lenghWords = Utils.GetLengthWords(contentDtos);
             StateHasChanged();

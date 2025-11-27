@@ -15,7 +15,7 @@
         public ChapterOverview? CurrentChapter { get; set; }
         public ChapterOverview? PrevChapter { get; set; }
         public ChapterOverview? NextChapter { get; set; }
-        public List<ContentDto>? Contents { get; set; }
+        public List<Content>? Contents { get; set; }
         public string? WordsLengths { get; set; }
     }
 }
