@@ -136,6 +136,7 @@
     private string FontSize = "1.125rem";
     private string WidthSize = "content-width-xl";
     private bool IsNavVisible = true;
+    private bool IsPreventArrowKey = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -149,10 +150,15 @@
         }
     }
 
+    public void EnablePreventArrowKey(bool isEnable)
+    {
+        IsPreventArrowKey = isEnable;
+    }
+
     [JSInvokable]
     public async Task OnArrowLeft()
     {
-        if (!string.IsNullOrEmpty(PrevChapterId))
+        if (!string.IsNullOrEmpty(PrevChapterId) && !IsPreventArrowKey)
         {
             await JSRuntime.InvokeVoidAsync("reader.clickElement", PrevButton);
         }
@@ -161,7 +167,7 @@
     [JSInvokable]
     public async Task OnArrowRight()
     {
-        if (!string.IsNullOrEmpty(NextChapterId))
+        if (!string.IsNullOrEmpty(NextChapterId) && !IsPreventArrowKey)
         {
             await JSRuntime.InvokeVoidAsync("reader.clickElement", NextButton);
         }
@@ -433,6 +439,7 @@
         ModalOnConfirm = onConfirm;
         ModalOnCancel = onCancel;
         ModalIsOpen = true;
+        EnablePreventArrowKey(true);
         StateHasChanged();
     }
 
@@ -448,11 +455,13 @@
         if (ModalOnCancel.HasValue)
             await ModalOnCancel.Value.InvokeAsync();
         CloseModal();
+        EnablePreventArrowKey(false);
     }
 
     public void CloseModal()
     {
         ModalIsOpen = false;
+        EnablePreventArrowKey(false);
         StateHasChanged();
     }
     public void Dispose()
