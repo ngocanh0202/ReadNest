@@ -64,11 +64,8 @@ window.reader = {
     scrollToText: (text: string, querytor: string,  behavior: ScrollBehavior = "smooth") => {
         if (!text) return;
         const elements = Array.from(document.body.querySelectorAll<HTMLElement>(querytor));
-        console.log(elements);
         const target = elements.find(el => el.innerText?.includes(text));
-        console.log(target);
         if (target) {
-            console.log("Scroll to");
             target.scrollIntoView({ behavior, block: "center" });
         } else {
             console.warn(`Text not found: "${text}"`);

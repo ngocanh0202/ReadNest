@@ -5,6 +5,7 @@
         public event Action<string, string>? OnShowAlert;
         public event Action<string>? OnSelectNovelId;
         public event Action<bool>? OnSetLoading;
+        public Action<string>? OnSetContent { get; set; }
         public void ShowAlert(string message, string type)
         {
             OnShowAlert?.Invoke(message, type);

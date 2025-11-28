@@ -11439,10 +11439,8 @@ window.reader = {
   },
   scrollToText: (i, t, e = "smooth") => {
     if (!i) return;
-    const r = Array.from(document.body.querySelectorAll(t));
-    console.log(r);
-    const o = r.find((l) => l.innerText?.includes(i));
-    console.log(o), o ? (console.log("Scroll to"), o.scrollIntoView({ behavior: e, block: "center" })) : console.warn(`Text not found: "${i}"`);
+    const o = Array.from(document.body.querySelectorAll(t)).find((l) => l.innerText?.includes(i));
+    o ? o.scrollIntoView({ behavior: e, block: "center" }) : console.warn(`Text not found: "${i}"`);
   }
 };
 export {

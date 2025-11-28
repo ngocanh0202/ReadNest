@@ -530,7 +530,6 @@
             });
             newChapterNames[volumnId] = string.Empty;
             SetShowMoreChapterInVolumn(volumnId, true);
-            Console.WriteLine($"chapter-{newId}");
             await JS.InvokeVoidAsync("reader.scrollToSelector", $"#chapter-{newId}");
             await NotifyChanged();
         }

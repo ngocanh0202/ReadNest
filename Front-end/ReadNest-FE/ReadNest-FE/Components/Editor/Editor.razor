@@ -1,6 +1,7 @@
 ﻿@inject IJSRuntime JS
 @implements IDisposable
 @inject ReadNest_FE.Interfaces.IImageService ImageService
+@inject ReadNest_FE.Services.UiEventService UiEventService
 @using ReadNest_Models
 @using ReadNest_FE.Models
 
@@ -11,7 +12,6 @@
     [Parameter] public string? id { get; set; } = "0";
     [Parameter] public string? content { get; set; }
     [Parameter] public EventCallback<string> contentChanged { get; set; }
-    [Parameter] public EventCallback<string> OnSetContent { get; set; }
     private DotNetObjectReference<Editor>? dotNetRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -25,7 +25,14 @@
             }
             await JS.InvokeVoidAsync("reader.removeDom", ".ql-toolbar.ql-snow");
             await JS.InvokeVoidAsync("editor.init", $"#editor-container-{id}", dotNetRef);
+            await JS.InvokeVoidAsync("editor.setContent", $"#editor-container-{id}", content);
+            UiEventService.OnSetContent += HandleSetContent;
         }
+    }
+
+    public async void HandleSetContent(string strContent)
+    {
+        content = strContent;
         await JS.InvokeVoidAsync("editor.setContent", $"#editor-container-{id}", content);
     }
 
@@ -86,6 +93,7 @@
         {
             Layout.OnInsertContent -= HandleInsertFromLayout;
         }
+        UiEventService.OnSetContent -= HandleSetContent;
         _ = JS.InvokeVoidAsync("editor.destroy", $"#editor-container-{id}");
         _ = JS.InvokeVoidAsync("reader.removeDom", ".ql-toolbar.ql-snow");
     }

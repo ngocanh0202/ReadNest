@@ -73,7 +73,6 @@
     {
         try
         {
-            Console.WriteLine("Load");
             response = await ChapterService.GetDetailChapterById(Id!);
             if (response?.Success == true && response.Data is not null)
             {
