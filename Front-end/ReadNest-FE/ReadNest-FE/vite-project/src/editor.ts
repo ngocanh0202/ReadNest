@@ -19,7 +19,7 @@ interface EditorMap {
 }
 
 const editors: EditorMap = {};
-const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; 
 
 window.editor = {
     init: (selector: string, dotNetRef: any) => {

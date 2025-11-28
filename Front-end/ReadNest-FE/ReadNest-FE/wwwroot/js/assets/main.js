@@ -7647,7 +7647,7 @@ U.register({
   "ui/color-picker": Bl,
   "ui/tooltip": $l
 }, !0);
-const Yn = {}, Ba = 5 * 1024 * 1024;
+const Yn = {}, Ba = 10 * 1024 * 1024;
 window.editor = {
   init: (i, t) => {
     const e = document.querySelector(i);

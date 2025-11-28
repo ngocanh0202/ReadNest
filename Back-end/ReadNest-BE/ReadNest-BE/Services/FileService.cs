@@ -8,7 +8,7 @@ namespace ReadNest_BE.Services
     {
         private readonly IWebHostEnvironment _environment;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly long _maxFileSize = 5 * 1024 * 1024;
+        private readonly long _maxFileSize = 10 * 1024 * 1024;
         private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
 
         public FileService(

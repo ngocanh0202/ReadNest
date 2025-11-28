@@ -276,7 +276,7 @@
 
         if (selectedFile == null) return;
 
-        if (selectedFile.Size > 5 * 1024 * 1024)
+        if (selectedFile.Size > 10 * 1024 * 1024)
         {
             Layout?.ShowAlert("Image size must not exceed 5MB", "error");
             return;
@@ -292,7 +292,7 @@
         try
         {
             var buffer = new byte[selectedFile.Size];
-            using (var readStream = selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024))
+            using (var readStream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
             {
                 await readStream.ReadAsync(buffer, 0, (int)selectedFile.Size);
             }
