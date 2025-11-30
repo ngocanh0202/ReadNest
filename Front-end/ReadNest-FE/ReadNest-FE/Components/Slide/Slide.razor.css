@@ -36,9 +36,18 @@
     .slide img {
         width: 100%;
         height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+@media (max-width: 640px) {
+    .slide img {
+        width: 100%;
+        height: 100%;
         object-fit: cover;
         display: block;
     }
+}
 
 .slide-content {
     position: absolute;
