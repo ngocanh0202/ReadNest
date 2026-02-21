@@ -262,7 +262,7 @@ namespace ReadNest_BE.Controllers
                                 await _chapterRepository.DeleteRange(chaptersToDelete);
                             }
 
-                            await _chapterRepository.CreateOrUpdateMany(chaptersToKeep);
+                            await _chapterRepository.CreateOrUpdateMany(chaptersToKeep, false);
                         }
                         else
                         {

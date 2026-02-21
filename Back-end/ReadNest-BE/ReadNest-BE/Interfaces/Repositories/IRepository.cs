@@ -5,7 +5,7 @@ namespace ReadNest_BE.Interfaces.Repositories
     public interface IRepository<T> where T : BaseModel
     {
         Task<T> Create(T entity);
-        Task<List<T>> CreateOrUpdateMany(List<T> entities);
+        Task<List<T>> CreateOrUpdateMany(List<T> entities, bool canUpdateCreateDate);
         Task<T> CreateOrUpdate(T entity, string id);
         Task<List<T>> GetAll();
         Task<T> GetById(string id);

@@ -42,7 +42,7 @@ namespace ReadNest_BE.Repositories.Shares
             throw new NotImplementedException();
         }
 
-        public Task<List<T>> CreateOrUpdateMany(List<T> entities)
+        public Task<List<T>> CreateOrUpdateMany(List<T> entities, bool t)
         {
             throw new NotImplementedException();
         }

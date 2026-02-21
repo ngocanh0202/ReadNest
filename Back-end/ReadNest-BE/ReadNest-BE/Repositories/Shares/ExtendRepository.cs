@@ -65,7 +65,7 @@ namespace ReadNest_BE.Repositories.Shares
             }
         }
 
-        public async Task<List<T>> CreateOrUpdateMany(List<T> entities)
+        public async Task<List<T>> CreateOrUpdateMany(List<T> entities, bool canUpdateUpDate = true)
         {
             IDbContextTransaction? transaction = null;
             try
@@ -82,7 +82,10 @@ namespace ReadNest_BE.Repositories.Shares
                     }
 
                     entity.UpdateBy = Utils.Utils.GenerateFieldUpdateBy(entity.UpdateBy!, _jwtService.GetUserIdFromToken()!);
-                    entity.UpdateDate = DateTime.UtcNow;
+                    if (canUpdateUpDate)
+                    {
+                        entity.UpdateDate = DateTime.UtcNow;
+                    }
 
                     await CreateOrUpdate(entity, entity.Id);
                 }

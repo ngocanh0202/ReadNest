@@ -59,7 +59,7 @@ namespace ReadNest_BE.Controllers
                 await _contentRepository.DeleteRange(oldContents);
                 List<Content> newContent = contents.Adapt<List<Content>>();
                 var updatedEntity = PrepareEntityForUpdate(entity, entity, userId);
-                var createdContents = await _contentRepository.CreateOrUpdateMany(newContent);
+                var createdContents = await _contentRepository.CreateOrUpdateMany(newContent, true);
                 var responeseContents = createdContents.Adapt<List<Content>>();
                 await ((IChapterRepository)_repository).Update(updatedEntity);
                 return Ok(new Response<List<Content>>(responeseContents, "Update contents for chapter successfully", true));
